@@ -10,6 +10,7 @@ namespace GreenHellAutoStart
     public sealed class Plugin : BaseUnityPlugin
     {
         internal static ConfigEntry<bool> AutoContinue;
+        internal static ConfigEntry<bool> LogMenuEvents;
         internal static ManualLogSource PluginLog;
 
         private Harmony _harmony;
@@ -18,7 +19,9 @@ namespace GreenHellAutoStart
         {
             PluginLog = Logger;
             AutoContinue = Config.Bind("General", "AutoContinue", true,
-                "Automatically continue the latest single-player save after the main menu initializes.");
+                "Automatically continue the latest multiplayer host save after the main menu initializes.");
+            LogMenuEvents = Config.Bind("General", "LogMenuEvents", false,
+                "Log menu screen transitions and button clicks while navigating automatically.");
 
             _harmony = new Harmony("local.greenhell.autostart");
             _harmony.PatchAll();
@@ -32,59 +35,120 @@ namespace GreenHellAutoStart
         }
     }
 
-    [HarmonyPatch(typeof(MainMenu), "Update")]
-    internal static class MainMenuAutoContinuePatch
+    [HarmonyPatch(typeof(MainMenuManager), "Update")]
+    internal static class MultiplayerAutoContinuePatch
     {
-        private static bool _attempted;
+        private static int _stage;
+        private static int _lastLoggedStage = -1;
+        private static Type _lastLoggedScreen;
+        private static bool _lastLoggedTransitionState;
+        private static bool _lastLoggedInputBlocked;
 
         [HarmonyPostfix]
-        private static void Postfix(MainMenu __instance)
+        private static void Postfix(MainMenuManager __instance)
         {
-            if (Plugin.AutoContinue == null || !Plugin.AutoContinue.Value || _attempted || __instance == null)
+            if (__instance == null)
+                return;
+
+            if (Plugin.LogMenuEvents != null && Plugin.LogMenuEvents.Value)
+                UIUtils.CaptureMenuEvents(__instance);
+
+            if (Plugin.AutoContinue == null || !Plugin.AutoContinue.Value || _stage >= 3)
                 return;
 
             try
             {
-                bool buttonsActive = Traverse.Create(__instance)
-                    .Field("m_ButtonsActive")
+                bool changingScreens = Traverse.Create(__instance)
+                    .Method("IsChangingScreens")
                     .GetValue<bool>();
-                if (!buttonsActive)
-                    return;
-
-                _attempted = true;
-
-                GreenHellGame game = GreenHellGame.Instance;
-                if (game != null && game.m_Settings != null)
+                bool uiInputsBlocked = Traverse.Create(__instance)
+                    .Method("IsUIInputsBlocked")
+                    .GetValue<bool>();
+                Type activeScreen = Traverse.Create(__instance)
+                    .Method("GetActiveScreen")
+                    .GetValue<Type>();
+                if (_lastLoggedStage != _stage || _lastLoggedScreen != activeScreen
+                    || _lastLoggedTransitionState != changingScreens
+                    || _lastLoggedInputBlocked != uiInputsBlocked)
                 {
-                    game.m_OnlyTutorial = false;
-                    game.m_Settings.m_GameVisibility = P2PGameVisibility.Singleplayer;
-                    Traverse.Create(typeof(MainMenuChooseMode))
-                        .Field("s_DisplayMode")
-                        .SetValue(MainMenuChooseMode.MainMenuChooseModeType.Singleplayer);
+                    Plugin.PluginLog.LogInfo("Auto sequence state: stage=" + _stage
+                        + ", screen=" + (activeScreen == null ? "<none>" : activeScreen.Name)
+                        + ", changingScreens=" + changingScreens
+                        + ", uiInputsBlocked=" + uiInputsBlocked);
+                    _lastLoggedStage = _stage;
+                    _lastLoggedScreen = activeScreen;
+                    _lastLoggedTransitionState = changingScreens;
+                    _lastLoggedInputBlocked = uiInputsBlocked;
                 }
 
-                if (__instance.m_ContinueLogic == null)
+                if (uiInputsBlocked)
                     return;
 
-                __instance.m_ContinueLogic.UpdateButton();
-                object saveInfo = Traverse.Create(__instance.m_ContinueLogic)
+                if (_stage == 0 && activeScreen == typeof(MainMenu))
+                {
+                    MainMenu mainMenu = (MainMenu)Traverse.Create(__instance)
+                        .Method("GetScreen", typeof(MainMenu))
+                        .GetValue();
+                    if (mainMenu == null || !Traverse.Create(mainMenu).Field("m_ButtonsActive").GetValue<bool>())
+                        return;
+
+                    Plugin.PluginLog.LogInfo("Selecting Multiplayer.");
+                    Traverse.Create(mainMenu).Method("OnMultiplayer").GetValue();
+                    _stage = 1;
+                    return;
+                }
+
+                if (_stage == 1 && activeScreen == typeof(MainMenuJoinOrHost))
+                {
+                    MainMenuJoinOrHost joinOrHost = (MainMenuJoinOrHost)Traverse.Create(__instance)
+                        .Method("GetScreen", typeof(MainMenuJoinOrHost))
+                        .GetValue();
+                    if (joinOrHost == null)
+                        return;
+
+                    Plugin.PluginLog.LogInfo("Selecting Host Game.");
+                    Traverse.Create(joinOrHost).Method("OnHost").GetValue();
+                    _stage = 2;
+                    return;
+                }
+
+                if (_stage != 2 || activeScreen != typeof(MainMenuChooseMode))
+                    return;
+
+                MainMenuChooseMode chooseMode = (MainMenuChooseMode)Traverse.Create(__instance)
+                    .Method("GetScreen", typeof(MainMenuChooseMode))
+                    .GetValue();
+                if (chooseMode == null)
+                    return;
+
+                ContinueButtonLogic continueLogic = Traverse.Create(chooseMode)
+                    .Field("m_ContinueLogic")
+                    .GetValue<ContinueButtonLogic>();
+                if (continueLogic == null)
+                    return;
+
+                continueLogic.UpdateButton();
+                object saveInfo = Traverse.Create(continueLogic)
                     .Field("m_LastSavedGameInfo")
                     .GetValue();
 
+                _stage = 3;
                 if (saveInfo != null)
                 {
-                    Plugin.PluginLog.LogInfo("Save found; continuing the latest single-player save.");
-                    __instance.m_ContinueLogic.OnButtonPressed();
+                    Plugin.PluginLog.LogInfo("Multiplayer save found; continuing the hosted world.");
+                    Traverse.Create(chooseMode).Method("OnContinue").GetValue();
                 }
                 else
                 {
-                    Plugin.PluginLog.LogInfo("No single-player save found; leaving the main menu available.");
+                    Plugin.PluginLog.LogInfo("No multiplayer save found; leaving the host menu available.");
                 }
             }
             catch (Exception exception)
             {
+                _stage = 3;
                 Plugin.PluginLog.LogError("Auto-continue failed: " + exception);
             }
         }
+
     }
 }

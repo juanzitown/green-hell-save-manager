@@ -8,12 +8,13 @@ This is an experimental goal, not a capability the game currently exposes as a d
 
 ## Current Prototype
 
-The current BepInEx plugin auto-continues the latest **single-player** save after the main menu is ready. It explicitly selects single-player mode; it does not start a co-op host, disable graphics, or provide a dedicated server. This prototype is a starting point for investigating the game's startup and save-loading flow.
+The current BepInEx plugin follows the menu sequence **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save once each screen is ready. `LogMenuEvents = true` logs active menu screens and button clicks while automatic navigation remains enabled. It does not disable graphics or provide a dedicated server. This prototype is a starting point for investigating the game's startup and save-loading flow.
 
 ## Commands
 
 - `yarn build` compiles against the local Green Hell/BepInEx assemblies and deploys the DLL into the game's `BepInEx/plugins/GHSaveAutoStart` folder.
 - `yarn restore` removes only this plugin's deployed DLL. It preserves the config and does not remove BepInEx or other plugins.
+- `yarn log` shows a concise menu trace and follows new entries; use `yarn log --all` for full plugin logs. Stop with Ctrl-C.
 
 The build defaults to `~/.local/share/Steam`, the `Proton 11.0` tool, and app ID `815370`. Override paths with `STEAM_ROOT`, `GREEN_HELL_DIR`, `GREEN_HELL_COMPAT_DATA`, and `PROTON_DIR` when needed.
 

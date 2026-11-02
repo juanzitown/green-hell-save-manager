@@ -1,0 +1,15 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "command": true,
+        "/^strings \"\\$HOME/\\.local/share/Steam/steamapps/common/Green Hell/GH_Data/Managed/Assembly-CSharp\\.dll\" \\| rg -i 'MainMenu\\.\\*\\(Host\\|Continue\\|Multiplayer\\|Mode\\)\\|Host\\.\\*Game\\|Multiplayer\\|ContinueLogic\\|OnButtonPressed\\|m_LastSavedGameInfo\\|GameVisibility'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "strings": true,
+        "true": true,
+        "/^python3 -c 'import dnfile; print\\(dnfile\\.__file__\\)'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

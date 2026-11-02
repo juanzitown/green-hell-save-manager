@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "bash scripts/build.sh",
-    "restore": "bash scripts/restore.sh"
+    "restore": "bash scripts/restore.sh",
+    "log": "bash scripts/log.sh"
   }
 }
