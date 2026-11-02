@@ -8,13 +8,13 @@ This is an experimental goal, not a capability the game currently exposes as a d
 
 ## Current Prototype
 
-The current BepInEx plugin follows the menu sequence **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save once each screen is ready. `LogMenuEvents = true` logs active menu screens and button clicks while automatic navigation remains enabled. It does not disable graphics or provide a dedicated server. This prototype is a starting point for investigating the game's startup and save-loading flow.
+The current BepInEx plugin follows the menu sequence **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save once each screen is ready. `LogMenuEvents = true` logs active menu screens and button clicks while automatic navigation remains enabled. `LowerResources` requests a 15 FPS cap and 480×320 window, disables VSync, runs in the background, and waits for the loading camera to become inactive, the Level `InventoryCamera` to exist, and the gameplay `Main Camera` to be active before disabling only that camera. This can blank gameplay and should be tested for effects on hosting and simulation. This remains an experimental client, not a dedicated server.
 
 ## Commands
 
 - `yarn build` compiles against the local Green Hell/BepInEx assemblies and deploys the DLL into the game's `BepInEx/plugins/GHSaveAutoStart` folder.
 - `yarn restore` removes only this plugin's deployed DLL. It preserves the config and does not remove BepInEx or other plugins.
-- `yarn log` shows a concise menu trace and follows new entries; use `yarn log --all` for full plugin logs. Stop with Ctrl-C.
+- `yarn log` shows a concise menu trace; use `yarn log --all` for full plugin logs or `yarn log --cameras` for the separate camera inventory. Camera inventory mode pauses camera disabling. Stop with Ctrl-C.
 
 The build defaults to `~/.local/share/Steam`, the `Proton 11.0` tool, and app ID `815370`. Override paths with `STEAM_ROOT`, `GREEN_HELL_DIR`, `GREEN_HELL_COMPAT_DATA`, and `PROTON_DIR` when needed.
 

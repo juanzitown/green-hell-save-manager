@@ -11,6 +11,7 @@ COMPILER="${PREFIX}/drive_c/windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${PROJECT_DIR}/src/GreenHellAutoStart.cs"
 UI_UTILS_SOURCE="${PROJECT_DIR}/src/UIUtils.cs"
+LOWER_RESOURCES_SOURCE="${PROJECT_DIR}/src/LowerResources.cs"
 CONFIG_TEMPLATE="${PROJECT_DIR}/config/local.greenhell.autostart.cfg"
 CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.greenhell.autostart.cfg"
 BUILD_DIR="${PROJECT_DIR}/build"
@@ -19,7 +20,7 @@ PLUGIN_DIR="${GAME_DIR}/BepInEx/plugins/GHSaveAutoStart"
 for required in "$GAME_DIR/GH_Data/Managed/Assembly-CSharp.dll" \
     "$GAME_DIR/BepInEx/core/BepInEx.dll" \
     "$GAME_DIR/BepInEx/core/0Harmony.dll" \
-    "$WINE" "$COMPILER" "$SOURCE" "$UI_UTILS_SOURCE" "$CONFIG_TEMPLATE"; do
+    "$WINE" "$COMPILER" "$SOURCE" "$UI_UTILS_SOURCE" "$LOWER_RESOURCES_SOURCE" "$CONFIG_TEMPLATE"; do
     if [[ ! -f "$required" ]]; then
         printf 'Missing required file: %s\n' "$required" >&2
         exit 1
@@ -46,7 +47,8 @@ WINEPREFIX="$PREFIX" WINEDEBUG=-all "$WINE" "$COMPILER" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.UIModule.dll")" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.UI.dll")" \
     "$(windows_path "$SOURCE")" \
-    "$(windows_path "$UI_UTILS_SOURCE")"
+    "$(windows_path "$UI_UTILS_SOURCE")" \
+    "$(windows_path "$LOWER_RESOURCES_SOURCE")"
 
 cp -f "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"
 if ! cmp -s "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"; then

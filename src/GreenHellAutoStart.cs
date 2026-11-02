@@ -22,14 +22,21 @@ namespace GreenHellAutoStart
                 "Automatically continue the latest multiplayer host save after the main menu initializes.");
             LogMenuEvents = Config.Bind("General", "LogMenuEvents", false,
                 "Log menu screen transitions and button clicks while navigating automatically.");
+            LowerResources.Initialize(Config);
 
             _harmony = new Harmony("local.greenhell.autostart");
             _harmony.PatchAll();
             Logger.LogInfo("Green Hell Auto Start loaded.");
         }
 
+        private void Update()
+        {
+            LowerResources.Update();
+        }
+
         private void OnDestroy()
         {
+            LowerResources.Restore();
             if (_harmony != null)
                 _harmony.UnpatchSelf();
         }

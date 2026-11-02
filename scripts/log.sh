@@ -7,13 +7,17 @@ LOG_FILE="${GAME_DIR}/BepInEx/LogOutput.log"
 
 case "${1:-}" in
     "")
-        FILTER='Menu diagnostics active|Active menu screen:|Auto sequence state:|Set menu display mode|display-mode enum|multiplayer display mode|UI click:|UI click listener:|Continue handler invoked:|Selecting Multiplayer\.|Selecting Host Game\.|Multiplayer save found|No multiplayer save found|Auto-continue failed|Menu diagnostics failed'
+        FILTER='Menu diagnostics active|Active menu screen:|Auto sequence state:|Resource settings:|Requested window resolution:|World transition:|World status:|World scene loaded:|Active world scene changed:|Waiting to disable gameplay camera:|Camera shutdown ready:|Disabling gameplay camera rendering:|Gameplay Main Camera became active again|Disabling camera rendering:|Camera active after disable|Set menu display mode|display-mode enum|multiplayer display mode|UI click:|UI click listener:|Continue handler invoked:|Selecting Multiplayer\.|Selecting Host Game\.|Multiplayer save found|No multiplayer save found|Auto-continue failed|Menu diagnostics failed'
         ;;
     --all)
         FILTER='Green Hell Auto Start|GreenHellAutoStart'
         ;;
+    --cameras)
+        LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-Camera.log"
+        FILTER='.'
+        ;;
     *)
-        printf 'Usage: yarn log [--all]\n' >&2
+        printf 'Usage: yarn log [--all|--cameras]\n' >&2
         exit 2
         ;;
 esac
