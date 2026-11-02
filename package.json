@@ -1,0 +1,9 @@
+{
+  "name": "greenhell-auto-start",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "restore": "bash scripts/restore.sh"
+  }
+}
