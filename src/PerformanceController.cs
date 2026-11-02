@@ -10,7 +10,6 @@ namespace GreenHellAutoStart
         private static ConfigEntry<int> _screenWidth;
         private static ConfigEntry<int> _screenHeight;
         private static bool _originalStateCaptured;
-        private static bool _settingsLogged;
         private static bool _resolutionApplied;
         private static int _originalTargetFrameRate;
         private static int _originalVSyncCount;
@@ -21,13 +20,13 @@ namespace GreenHellAutoStart
 
         internal static void Initialize(ConfigFile config)
         {
-            _targetFrameRate = config.Bind("Performance", "TargetFrameRate", 15,
+            _targetFrameRate = config.Bind("Performance", "TargetFrameRate", 9,
                 "Maximum Unity frame rate; set to 0 to leave the current frame rate unchanged.");
             _runInBackground = config.Bind("Performance", "RunInBackground", true,
                 "Keep game simulation running when the game window is not focused.");
-            _screenWidth = config.Bind("Display", "ScreenWidth", 480,
+            _screenWidth = config.Bind("Display", "ScreenWidth", 320,
                 "Window width to request at game startup.");
-            _screenHeight = config.Bind("Display", "ScreenHeight", 320,
+            _screenHeight = config.Bind("Display", "ScreenHeight", 240,
                 "Window height to request at game startup.");
 
             _originalTargetFrameRate = Application.targetFrameRate;
@@ -59,18 +58,8 @@ namespace GreenHellAutoStart
                 int width = Mathf.Clamp(_screenWidth.Value, 320, 7680);
                 int height = Mathf.Clamp(_screenHeight.Value, 240, 4320);
                 Screen.SetResolution(width, height, false);
-                Plugin.PluginLog.LogInfo("Requested window resolution: " + width + "x" + height + ".");
                 _resolutionApplied = true;
             }
-
-            if (_settingsLogged)
-                return;
-
-            Plugin.PluginLog.LogInfo("Resource settings: targetFrameRate=" + targetFrameRate
-                + ", vSyncCount=" + QualitySettings.vSyncCount
-                + ", runInBackground=" + Application.runInBackground
-                + ", resolution=" + _screenWidth.Value + "x" + _screenHeight.Value + ".");
-            _settingsLogged = true;
         }
 
         internal static void Restore()
@@ -84,5 +73,6 @@ namespace GreenHellAutoStart
             Screen.SetResolution(_originalScreenWidth, _originalScreenHeight, _originalFullscreen);
             _originalStateCaptured = false;
         }
+
     }
 }

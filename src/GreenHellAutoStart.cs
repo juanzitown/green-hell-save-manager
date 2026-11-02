@@ -26,7 +26,6 @@ namespace GreenHellAutoStart
 
             _harmony = new Harmony("local.greenhell.autostart");
             _harmony.PatchAll();
-            Logger.LogInfo("Green Hell Auto Start loaded.");
         }
 
         private void Update()
@@ -46,11 +45,6 @@ namespace GreenHellAutoStart
     internal static class MultiplayerAutoContinuePatch
     {
         private static int _stage;
-        private static int _lastLoggedStage = -1;
-        private static Type _lastLoggedScreen;
-        private static bool _lastLoggedTransitionState;
-        private static bool _lastLoggedInputBlocked;
-
         [HarmonyPostfix]
         private static void Postfix(MainMenuManager __instance)
         {
@@ -65,29 +59,12 @@ namespace GreenHellAutoStart
 
             try
             {
-                bool changingScreens = Traverse.Create(__instance)
-                    .Method("IsChangingScreens")
-                    .GetValue<bool>();
                 bool uiInputsBlocked = Traverse.Create(__instance)
                     .Method("IsUIInputsBlocked")
                     .GetValue<bool>();
                 Type activeScreen = Traverse.Create(__instance)
                     .Method("GetActiveScreen")
                     .GetValue<Type>();
-                if (_lastLoggedStage != _stage || _lastLoggedScreen != activeScreen
-                    || _lastLoggedTransitionState != changingScreens
-                    || _lastLoggedInputBlocked != uiInputsBlocked)
-                {
-                    Plugin.PluginLog.LogInfo("Auto sequence state: stage=" + _stage
-                        + ", screen=" + (activeScreen == null ? "<none>" : activeScreen.Name)
-                        + ", changingScreens=" + changingScreens
-                        + ", uiInputsBlocked=" + uiInputsBlocked);
-                    _lastLoggedStage = _stage;
-                    _lastLoggedScreen = activeScreen;
-                    _lastLoggedTransitionState = changingScreens;
-                    _lastLoggedInputBlocked = uiInputsBlocked;
-                }
-
                 if (uiInputsBlocked)
                     return;
 
@@ -99,7 +76,6 @@ namespace GreenHellAutoStart
                     if (mainMenu == null || !Traverse.Create(mainMenu).Field("m_ButtonsActive").GetValue<bool>())
                         return;
 
-                    Plugin.PluginLog.LogInfo("Selecting Multiplayer.");
                     Traverse.Create(mainMenu).Method("OnMultiplayer").GetValue();
                     _stage = 1;
                     return;
@@ -113,7 +89,6 @@ namespace GreenHellAutoStart
                     if (joinOrHost == null)
                         return;
 
-                    Plugin.PluginLog.LogInfo("Selecting Host Game.");
                     Traverse.Create(joinOrHost).Method("OnHost").GetValue();
                     _stage = 2;
                     return;
@@ -142,12 +117,7 @@ namespace GreenHellAutoStart
                 _stage = 3;
                 if (saveInfo != null)
                 {
-                    Plugin.PluginLog.LogInfo("Multiplayer save found; continuing the hosted world.");
                     Traverse.Create(chooseMode).Method("OnContinue").GetValue();
-                }
-                else
-                {
-                    Plugin.PluginLog.LogInfo("No multiplayer save found; leaving the host menu available.");
                 }
             }
             catch (Exception exception)

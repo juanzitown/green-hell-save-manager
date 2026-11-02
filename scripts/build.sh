@@ -65,9 +65,10 @@ if ! cmp -s "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.
     printf 'Deployed plugin verification failed: %s\n' "$PLUGIN_DIR/GreenHellAutoStart.dll" >&2
     exit 1
 fi
-if [[ ! -e "$CONFIG_FILE" ]]; then
-    cp "$CONFIG_TEMPLATE" "$CONFIG_FILE"
-else
-    printf 'Preserved existing config at %s; edit that file to change runtime settings.\n' "$CONFIG_FILE"
+cp -f "$CONFIG_TEMPLATE" "$CONFIG_FILE"
+if ! cmp -s "$CONFIG_TEMPLATE" "$CONFIG_FILE"; then
+    printf 'Config sync verification failed: %s\n' "$CONFIG_FILE" >&2
+    exit 1
 fi
+printf 'Synced plugin config from %s\n' "$CONFIG_TEMPLATE"
 printf 'Built and deployed GreenHellAutoStart.dll to %s\n' "$PLUGIN_DIR"

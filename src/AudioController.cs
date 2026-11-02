@@ -8,7 +8,6 @@ namespace GreenHellAutoStart
         private static ConfigEntry<bool> _muteAudio;
         private static bool _originalAudioPaused;
         private static bool _originalStateCaptured;
-        private static bool _stateLogged;
 
         internal static void Initialize(ConfigFile config)
         {
@@ -21,11 +20,6 @@ namespace GreenHellAutoStart
         internal static void Update()
         {
             AudioListener.pause = _muteAudio.Value || _originalAudioPaused;
-            if (_stateLogged)
-                return;
-
-            Plugin.PluginLog.LogInfo("Audio paused: " + AudioListener.pause + ".");
-            _stateLogged = true;
         }
 
         internal static void Restore()

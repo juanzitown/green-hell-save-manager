@@ -8,13 +8,13 @@ This is an experimental goal, not a capability the game currently exposes as a d
 
 ## Current Prototype
 
-The current BepInEx plugin follows the menu sequence **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save once each screen is ready. `LogMenuEvents = true` logs active menu screens and button clicks while automatic navigation remains enabled. `LowerResources` applies the configured frame limit and window size, disables VSync, runs in the background, and pauses Unity audio when enabled. It can disable the `MainMenu` camera after the screen is ready; those menu transitions use direct handlers and do not require pointer input. Gameplay-camera shutdown separately waits for the loading camera to become inactive, the Level `InventoryCamera` to exist, and the gameplay `Main Camera` to be active. Camera shutdown may blank the display and should be tested for effects on hosting and simulation. This remains an experimental client, not a dedicated server.
+The current BepInEx plugin follows **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save. `LowerResources` applies configured performance/display settings and audio behavior. `CameraController` scans scene cameras every 0.1 seconds, disables cameras outside `CameraNamesToKeep`, and writes timestamped live-camera and disable events to the camera log. This experimental policy can soft-lock startup if a camera needed during loading is not kept. Routine diagnostics are currently limited to the camera log.
 
 ## Commands
 
-- `yarn build` compiles against the local Green Hell/BepInEx assemblies and deploys the DLL into the game's `BepInEx/plugins/GHSaveAutoStart` folder.
+- `yarn build` compiles against the local Green Hell/BepInEx assemblies, deploys the DLL, and syncs `config/local.greenhell.autostart.cfg` to the installed BepInEx config on every build. Workspace config is authoritative; installed-only edits are overwritten.
 - `yarn restore` removes only this plugin's deployed DLL. It preserves the config and does not remove BepInEx or other plugins.
-- `yarn log` shows a concise menu trace; use `yarn log --all` for full plugin logs or `yarn log --cameras` for the separate camera inventory. Camera inventory mode pauses camera disabling. Stop with Ctrl-C.
+- `yarn log` or `yarn log --cameras` follows timestamped camera events; use `yarn log --all` for plugin errors. Stop with Ctrl-C.
 
 The build defaults to `~/.local/share/Steam`, the `Proton 11.0` tool, and app ID `815370`. Override paths with `STEAM_ROOT`, `GREEN_HELL_DIR`, `GREEN_HELL_COMPAT_DATA`, and `PROTON_DIR` when needed.
 
@@ -22,7 +22,7 @@ The build defaults to `~/.local/share/Steam`, the `Proton 11.0` tool, and app ID
 
 - Source: `src/GreenHellAutoStart.cs`
 - Build output: `build/GreenHellAutoStart.dll` (ignored by Git)
-- Default config: `config/local.greenhell.autostart.cfg` (deployed only when no config exists)
+- Config source: `config/local.greenhell.autostart.cfg` (synced to the installed plugin config on every build)
 - Installed plugin: `Green Hell/BepInEx/plugins/GHSaveAutoStart/GreenHellAutoStart.dll`
 - Plugin config: `Green Hell/BepInEx/config/local.greenhell.autostart.cfg`
 
