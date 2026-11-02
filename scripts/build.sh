@@ -11,16 +11,22 @@ COMPILER="${PREFIX}/drive_c/windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${PROJECT_DIR}/src/GreenHellAutoStart.cs"
 UI_UTILS_SOURCE="${PROJECT_DIR}/src/UIUtils.cs"
-LOWER_RESOURCES_SOURCE="${PROJECT_DIR}/src/LowerResources.cs"
+AUDIO_CONTROLLER_SOURCE="${PROJECT_DIR}/src/AudioController.cs"
+CAMERA_CONTROLLER_SOURCE="${PROJECT_DIR}/src/CameraController.cs"
+PERFORMANCE_CONTROLLER_SOURCE="${PROJECT_DIR}/src/PerformanceController.cs"
+RESOURCE_COORDINATOR_SOURCE="${PROJECT_DIR}/src/ResourceControllerCoordinator.cs"
 CONFIG_TEMPLATE="${PROJECT_DIR}/config/local.greenhell.autostart.cfg"
 CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.greenhell.autostart.cfg"
 BUILD_DIR="${PROJECT_DIR}/build"
 PLUGIN_DIR="${GAME_DIR}/BepInEx/plugins/GHSaveAutoStart"
 
 for required in "$GAME_DIR/GH_Data/Managed/Assembly-CSharp.dll" \
+    "$GAME_DIR/GH_Data/Managed/UnityEngine.AudioModule.dll" \
     "$GAME_DIR/BepInEx/core/BepInEx.dll" \
     "$GAME_DIR/BepInEx/core/0Harmony.dll" \
-    "$WINE" "$COMPILER" "$SOURCE" "$UI_UTILS_SOURCE" "$LOWER_RESOURCES_SOURCE" "$CONFIG_TEMPLATE"; do
+    "$WINE" "$COMPILER" "$SOURCE" "$UI_UTILS_SOURCE" \
+    "$AUDIO_CONTROLLER_SOURCE" "$CAMERA_CONTROLLER_SOURCE" "$PERFORMANCE_CONTROLLER_SOURCE" \
+    "$RESOURCE_COORDINATOR_SOURCE" "$CONFIG_TEMPLATE"; do
     if [[ ! -f "$required" ]]; then
         printf 'Missing required file: %s\n' "$required" >&2
         exit 1
@@ -46,9 +52,13 @@ WINEPREFIX="$PREFIX" WINEDEBUG=-all "$WINE" "$COMPILER" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.CoreModule.dll")" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.UIModule.dll")" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.UI.dll")" \
+    "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.AudioModule.dll")" \
     "$(windows_path "$SOURCE")" \
     "$(windows_path "$UI_UTILS_SOURCE")" \
-    "$(windows_path "$LOWER_RESOURCES_SOURCE")"
+    "$(windows_path "$AUDIO_CONTROLLER_SOURCE")" \
+    "$(windows_path "$CAMERA_CONTROLLER_SOURCE")" \
+    "$(windows_path "$PERFORMANCE_CONTROLLER_SOURCE")" \
+    "$(windows_path "$RESOURCE_COORDINATOR_SOURCE")"
 
 cp -f "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"
 if ! cmp -s "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"; then

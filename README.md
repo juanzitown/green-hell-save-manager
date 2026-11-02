@@ -8,7 +8,7 @@ This is an experimental goal, not a capability the game currently exposes as a d
 
 ## Current Prototype
 
-The current BepInEx plugin follows the menu sequence **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save once each screen is ready. `LogMenuEvents = true` logs active menu screens and button clicks while automatic navigation remains enabled. `LowerResources` requests a 15 FPS cap and 480×320 window, disables VSync, runs in the background, and waits for the loading camera to become inactive, the Level `InventoryCamera` to exist, and the gameplay `Main Camera` to be active before disabling only that camera. This can blank gameplay and should be tested for effects on hosting and simulation. This remains an experimental client, not a dedicated server.
+The current BepInEx plugin follows the menu sequence **Multiplayer → Host Game → Continue** and auto-continues the latest multiplayer host save once each screen is ready. `LogMenuEvents = true` logs active menu screens and button clicks while automatic navigation remains enabled. `LowerResources` applies the configured frame limit and window size, disables VSync, runs in the background, and pauses Unity audio when enabled. It can disable the `MainMenu` camera after the screen is ready; those menu transitions use direct handlers and do not require pointer input. Gameplay-camera shutdown separately waits for the loading camera to become inactive, the Level `InventoryCamera` to exist, and the gameplay `Main Camera` to be active. Camera shutdown may blank the display and should be tested for effects on hosting and simulation. This remains an experimental client, not a dedicated server.
 
 ## Commands
 

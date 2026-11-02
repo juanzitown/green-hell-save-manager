@@ -10,30 +10,18 @@ using UnityEngine.SceneManagement;
 
 namespace GreenHellAutoStart
 {
-    internal static class LowerResources
+    internal static class CameraController
     {
         private static ConfigEntry<bool> _disableCameraRendering;
+        private static ConfigEntry<bool> _disableMenuCamera;
         private static ConfigEntry<bool> _logCameraInventory;
-        private static ConfigEntry<int> _targetFrameRate;
-        private static ConfigEntry<bool> _runInBackground;
-        private static ConfigEntry<int> _screenWidth;
-        private static ConfigEntry<int> _screenHeight;
         private static readonly Dictionary<Camera, bool> OriginalCameraStates = new Dictionary<Camera, bool>();
         private static Camera _gameplayCamera;
-        private static bool _originalSettingsCaptured;
-        private static bool _settingsLogged;
         private static bool _cameraShutdownReadyLogged;
-        private static int _originalTargetFrameRate;
-        private static int _originalVSyncCount;
-        private static bool _originalRunInBackground;
-        private static int _originalScreenWidth;
-        private static int _originalScreenHeight;
-        private static bool _originalFullscreen;
-        private static bool _resolutionApplied;
-        private static float _nextCameraScanTime;
         private static bool _eventsSubscribed;
-        private static bool _hasLoggedGameStarted;
-        private static bool _lastGameStarted;
+        private static bool _hasLoggedWorldReady;
+        private static bool _lastWorldReady;
+        private static float _nextCameraScanTime;
         private static float _nextStatusLogTime;
         private static float _nextCameraInventoryLogTime;
         private static string _cameraLogPath;
@@ -43,16 +31,10 @@ namespace GreenHellAutoStart
         {
             _disableCameraRendering = config.Bind("Graphics", "DisableCameraRendering", true,
                 "Disable the gameplay Main Camera once it appears in the world. Loading and Notepad cameras stay enabled.");
+            _disableMenuCamera = config.Bind("Graphics", "DisableMenuCamera", true,
+                "Disable the MainMenu scene camera after its screen is ready. Menu transitions remain programmatic.");
             _logCameraInventory = config.Bind("Graphics", "LogCameraInventory", false,
                 "Write all scene cameras to a separate log and pause camera disabling while enabled.");
-            _targetFrameRate = config.Bind("Performance", "TargetFrameRate", 15,
-                "Maximum Unity frame rate; set to 0 to leave the current frame rate unchanged.");
-            _runInBackground = config.Bind("Performance", "RunInBackground", true,
-                "Keep game simulation running when the game window is not focused.");
-            _screenWidth = config.Bind("Display", "ScreenWidth", 480,
-                "Window width to request at game startup.");
-            _screenHeight = config.Bind("Display", "ScreenHeight", 320,
-                "Window height to request at game startup.");
 
             _cameraLogPath = Path.Combine(Paths.BepInExRootPath, "GreenHellAutoStart-Camera.log");
             try
@@ -73,21 +55,18 @@ namespace GreenHellAutoStart
 
         internal static void Update()
         {
-            CaptureOriginalSettings();
-            ApplyPerformanceSettings();
-
             MainMenuManager menuManager = MainMenuManager.Get();
             string readinessSource;
             bool worldReady = IsWorldReady(menuManager, out readinessSource);
-            if (!_hasLoggedGameStarted || worldReady != _lastGameStarted)
+            if (!_hasLoggedWorldReady || worldReady != _lastWorldReady)
             {
                 Scene activeScene = SceneManager.GetActiveScene();
                 Plugin.PluginLog.LogInfo("World transition: worldReady=" + worldReady
                     + ", source=" + readinessSource
                     + ", managerPresent=" + (menuManager != null)
                     + ", activeScene=" + activeScene.name);
-                _lastGameStarted = worldReady;
-                _hasLoggedGameStarted = true;
+                _lastWorldReady = worldReady;
+                _hasLoggedWorldReady = true;
             }
 
             if (Time.unscaledTime >= _nextStatusLogTime)
@@ -106,6 +85,9 @@ namespace GreenHellAutoStart
                 return;
             }
 
+            if (_disableCameraRendering.Value && _disableMenuCamera.Value)
+                DisableReadyMenuCamera();
+
             if (!worldReady)
                 return;
 
@@ -122,7 +104,7 @@ namespace GreenHellAutoStart
             string cameraReadiness;
             if (!IsCameraShutdownReady(out _gameplayCamera, out cameraReadiness))
             {
-                if (!string.Equals(_lastCameraReadiness, cameraReadiness, System.StringComparison.Ordinal))
+                if (!string.Equals(_lastCameraReadiness, cameraReadiness, StringComparison.Ordinal))
                 {
                     Plugin.PluginLog.LogInfo("Waiting to disable gameplay camera: " + cameraReadiness);
                     _lastCameraReadiness = cameraReadiness;
@@ -159,66 +141,7 @@ namespace GreenHellAutoStart
                 SceneManager.activeSceneChanged -= OnActiveSceneChanged;
                 _eventsSubscribed = false;
             }
-
             RestoreCameras();
-            if (!_originalSettingsCaptured)
-                return;
-
-            Application.targetFrameRate = _originalTargetFrameRate;
-            QualitySettings.vSyncCount = _originalVSyncCount;
-            Application.runInBackground = _originalRunInBackground;
-            Screen.SetResolution(_originalScreenWidth, _originalScreenHeight, _originalFullscreen);
-            _originalSettingsCaptured = false;
-        }
-
-        private static void CaptureOriginalSettings()
-        {
-            if (_originalSettingsCaptured)
-                return;
-
-            _originalTargetFrameRate = Application.targetFrameRate;
-            _originalVSyncCount = QualitySettings.vSyncCount;
-            _originalRunInBackground = Application.runInBackground;
-            _originalScreenWidth = Screen.width;
-            _originalScreenHeight = Screen.height;
-            _originalFullscreen = Screen.fullScreen;
-            _originalSettingsCaptured = true;
-        }
-
-        private static void ApplyPerformanceSettings()
-        {
-            int targetFrameRate = Mathf.Clamp(_targetFrameRate.Value, 0, 240);
-            if (targetFrameRate > 0)
-            {
-                Application.targetFrameRate = targetFrameRate;
-                QualitySettings.vSyncCount = 0;
-            }
-            else
-            {
-                Application.targetFrameRate = _originalTargetFrameRate;
-                QualitySettings.vSyncCount = _originalVSyncCount;
-            }
-
-            Application.runInBackground = _runInBackground.Value;
-            if (!_resolutionApplied)
-            {
-                int width = Mathf.Clamp(_screenWidth.Value, 320, 7680);
-                int height = Mathf.Clamp(_screenHeight.Value, 240, 4320);
-                Screen.SetResolution(width, height, false);
-                Plugin.PluginLog.LogInfo("Requested window resolution: " + width + "x" + height + ".");
-                _resolutionApplied = true;
-            }
-
-            if (_settingsLogged)
-                return;
-
-            Plugin.PluginLog.LogInfo("Resource settings: targetFrameRate=" + targetFrameRate
-                + ", vSyncCount=" + QualitySettings.vSyncCount
-                + ", runInBackground=" + Application.runInBackground
-                + ", disableCameraRendering=" + _disableCameraRendering.Value
-                + ", resolution=" + _screenWidth.Value + "x" + _screenHeight.Value
-                + "; camera shutdown waits for game start.");
-            _settingsLogged = true;
         }
 
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -241,6 +164,130 @@ namespace GreenHellAutoStart
                 + " -> " + activeScene.name
                 + ", activeCameras=" + Camera.allCameras.Length);
             LogCameraInventory("active-scene-changed:" + activeScene.name);
+        }
+
+        private static bool IsWorldReady(MainMenuManager menuManager, out string source)
+        {
+            if (menuManager != null
+                && Traverse.Create(menuManager).Method("IsGameStarted").GetValue<bool>())
+            {
+                source = "menu-manager";
+                return true;
+            }
+
+            Scene activeScene = SceneManager.GetActiveScene();
+            if (menuManager == null && activeScene.isLoaded
+                && string.Equals(activeScene.name, "Level", StringComparison.Ordinal))
+            {
+                source = "active-game-scene";
+                return true;
+            }
+
+            source = menuManager == null ? "no-menu-manager" : "menu-manager-not-started";
+            return false;
+        }
+
+        private static void DisableReadyMenuCamera()
+        {
+            MainMenuManager menuManager = MainMenuManager.Get();
+            if (menuManager == null
+                || Traverse.Create(menuManager).Method("IsUIInputsBlocked").GetValue<bool>())
+                return;
+
+            Type activeScreen = Traverse.Create(menuManager)
+                .Method("GetActiveScreen")
+                .GetValue<Type>();
+            if (activeScreen != typeof(MainMenu)
+                && activeScreen != typeof(MainMenuJoinOrHost)
+                && activeScreen != typeof(MainMenuChooseMode))
+                return;
+
+            Camera menuCamera = FindSceneCamera("Camera", "MainMenu");
+            if (menuCamera == null || !menuCamera.enabled)
+                return;
+
+            if (!OriginalCameraStates.ContainsKey(menuCamera))
+            {
+                OriginalCameraStates.Add(menuCamera, menuCamera.enabled);
+                Plugin.PluginLog.LogInfo("Disabling menu camera: " + menuCamera.name
+                    + "; automatic menu handlers remain enabled.");
+            }
+            menuCamera.enabled = false;
+        }
+
+        private static bool IsCameraShutdownReady(out Camera gameplayCamera, out string reason)
+        {
+            Camera loadingCamera = FindSceneCamera("LoadingCamera", null);
+            Camera inventoryCamera = FindSceneCamera("InventoryCamera", "Level");
+            gameplayCamera = FindSceneCamera("Main Camera", "Level");
+
+            bool loadingCameraActive = loadingCamera != null
+                && loadingCamera.enabled
+                && loadingCamera.gameObject.activeInHierarchy;
+            bool inventoryCameraPresent = inventoryCamera != null;
+            bool gameplayCameraActive = gameplayCamera != null
+                && gameplayCamera.enabled
+                && gameplayCamera.gameObject.activeInHierarchy;
+
+            reason = "loadingCameraActive=" + loadingCameraActive
+                + ", inventoryCameraPresent=" + inventoryCameraPresent
+                + ", gameplayCameraActive=" + gameplayCameraActive;
+            return !loadingCameraActive && inventoryCameraPresent && gameplayCameraActive;
+        }
+
+        private static Camera FindSceneCamera(string cameraName, string sceneName)
+        {
+            Camera[] cameras = Resources.FindObjectsOfTypeAll<Camera>();
+            foreach (Camera camera in cameras)
+            {
+                if (camera == null || !camera.gameObject.scene.IsValid())
+                    continue;
+                if (!string.Equals(camera.name, cameraName, StringComparison.Ordinal))
+                    continue;
+                if (sceneName != null && !string.Equals(camera.gameObject.scene.name, sceneName, StringComparison.Ordinal))
+                    continue;
+                if (sceneName == null && camera.gameObject.scene.name != "Level"
+                    && camera.gameObject.scene.name != "DontDestroyOnLoad")
+                    continue;
+
+                return camera;
+            }
+            return null;
+        }
+
+        private static void LogWorldStatus(MainMenuManager menuManager, bool worldReady, string readinessSource)
+        {
+            Camera[] cameras = Camera.allCameras;
+            StringBuilder cameraNames = new StringBuilder();
+            foreach (Camera camera in cameras)
+            {
+                if (camera == null)
+                    continue;
+                if (cameraNames.Length > 0)
+                    cameraNames.Append(", ");
+                cameraNames.Append(camera.name);
+            }
+
+            StringBuilder loadedScenes = new StringBuilder();
+            for (int index = 0; index < SceneManager.sceneCount; index++)
+            {
+                Scene scene = SceneManager.GetSceneAt(index);
+                if (!scene.isLoaded)
+                    continue;
+                if (loadedScenes.Length > 0)
+                    loadedScenes.Append(", ");
+                loadedScenes.Append(scene.name);
+            }
+
+            Scene activeScene = SceneManager.GetActiveScene();
+            Plugin.PluginLog.LogInfo("World status: worldReady=" + worldReady
+                + ", source=" + readinessSource
+                + ", managerPresent=" + (menuManager != null)
+                + ", activeScene=" + activeScene.name
+                + ", loadedScenes=[" + loadedScenes + "]"
+                + ", enabledCameras=[" + cameraNames + "]"
+                + ", focused=" + Application.isFocused
+                + ", timeScale=" + Time.timeScale);
         }
 
         private static void LogCameraInventory(string reason)
@@ -299,102 +346,6 @@ namespace GreenHellAutoStart
                 path = transform.name + "/" + path;
             }
             return path;
-        }
-
-        private static bool IsWorldReady(MainMenuManager menuManager, out string source)
-        {
-            if (menuManager != null
-                && Traverse.Create(menuManager).Method("IsGameStarted").GetValue<bool>())
-            {
-                source = "menu-manager";
-                return true;
-            }
-
-            Scene activeScene = SceneManager.GetActiveScene();
-            if (menuManager == null && activeScene.isLoaded
-                && string.Equals(activeScene.name, "Level", System.StringComparison.Ordinal))
-            {
-                source = "active-game-scene";
-                return true;
-            }
-
-            source = menuManager == null ? "no-menu-manager" : "menu-manager-not-started";
-            return false;
-        }
-
-        private static bool IsCameraShutdownReady(out Camera gameplayCamera, out string reason)
-        {
-            Camera loadingCamera = FindSceneCamera("LoadingCamera", null);
-            Camera inventoryCamera = FindSceneCamera("InventoryCamera", "Level");
-            gameplayCamera = FindSceneCamera("Main Camera", "Level");
-
-            bool loadingCameraActive = loadingCamera != null
-                && loadingCamera.enabled
-                && loadingCamera.gameObject.activeInHierarchy;
-            bool inventoryCameraPresent = inventoryCamera != null;
-            bool gameplayCameraActive = gameplayCamera != null
-                && gameplayCamera.enabled
-                && gameplayCamera.gameObject.activeInHierarchy;
-
-            reason = "loadingCameraActive=" + loadingCameraActive
-                + ", inventoryCameraPresent=" + inventoryCameraPresent
-                + ", gameplayCameraActive=" + gameplayCameraActive;
-            return !loadingCameraActive && inventoryCameraPresent && gameplayCameraActive;
-        }
-
-        private static Camera FindSceneCamera(string cameraName, string sceneName)
-        {
-            Camera[] cameras = Resources.FindObjectsOfTypeAll<Camera>();
-            foreach (Camera camera in cameras)
-            {
-                if (camera == null || !camera.gameObject.scene.IsValid())
-                    continue;
-                if (!string.Equals(camera.name, cameraName, System.StringComparison.Ordinal))
-                    continue;
-                if (sceneName != null && !string.Equals(camera.gameObject.scene.name, sceneName, System.StringComparison.Ordinal))
-                    continue;
-                if (sceneName == null && camera.gameObject.scene.name != "Level"
-                    && camera.gameObject.scene.name != "DontDestroyOnLoad")
-                    continue;
-
-                    return camera;
-            }
-            return null;
-        }
-
-        private static void LogWorldStatus(MainMenuManager menuManager, bool worldReady, string readinessSource)
-        {
-            Camera[] cameras = Camera.allCameras;
-            StringBuilder cameraNames = new StringBuilder();
-            foreach (Camera camera in cameras)
-            {
-                if (camera == null)
-                    continue;
-                if (cameraNames.Length > 0)
-                    cameraNames.Append(", ");
-                cameraNames.Append(camera.name);
-            }
-
-            StringBuilder loadedScenes = new StringBuilder();
-            for (int index = 0; index < SceneManager.sceneCount; index++)
-            {
-                Scene scene = SceneManager.GetSceneAt(index);
-                if (!scene.isLoaded)
-                    continue;
-                if (loadedScenes.Length > 0)
-                    loadedScenes.Append(", ");
-                loadedScenes.Append(scene.name);
-            }
-
-            Scene activeScene = SceneManager.GetActiveScene();
-            Plugin.PluginLog.LogInfo("World status: worldReady=" + worldReady
-                + ", source=" + readinessSource
-                + ", managerPresent=" + (menuManager != null)
-                + ", activeScene=" + activeScene.name
-                + ", loadedScenes=[" + loadedScenes + "]"
-                + ", enabledCameras=[" + cameraNames + "]"
-                + ", focused=" + Application.isFocused
-                + ", timeScale=" + Time.timeScale);
         }
 
         private static void RestoreCameras()
