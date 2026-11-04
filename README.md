@@ -12,9 +12,9 @@ The current BepInEx plugin follows **Multiplayer → Host Game → Continue** an
 
 ## Commands
 
-- `yarn build` compiles against the local Green Hell/BepInEx assemblies, deploys `GHServer.dll`, and syncs `config/mod.cfg` to the installed `local.greenhell.autostart.cfg` on every build. Workspace config is authoritative; installed-only edits are overwritten.
+- `yarn build` compiles against the local Green Hell/BepInEx assemblies, deploys `GHServer.dll`, and syncs `config/mod.cfg` to the installed `local.ghserver.cfg` on every build. Workspace config is authoritative; installed-only edits are overwritten.
 - `yarn restore` removes only this plugin's deployed DLL. It preserves the config and does not remove BepInEx or other plugins.
-- `yarn log` or `yarn log --cameras` follows timestamped camera events; use `yarn log --all` for plugin errors. Stop with Ctrl-C.
+- `yarn log` or `yarn log --memory` follows memory findings; use `yarn log --all` for plugin errors. Stop with Ctrl-C.
 
 The build defaults to `~/.local/share/Steam`, the `Proton 11.0` tool, and app ID `815370`. Override paths with `STEAM_ROOT`, `GREEN_HELL_DIR`, `GREEN_HELL_COMPAT_DATA`, and `PROTON_DIR` when needed.
 
@@ -24,7 +24,9 @@ The build defaults to `~/.local/share/Steam`, the `Proton 11.0` tool, and app ID
 - Build output: `build/GHServer.dll` (ignored by Git)
 - Config source: `config/mod.cfg` (synced to the installed plugin config on every build)
 - Installed plugin: `Green Hell/BepInEx/plugins/GHServer/GHServer.dll`
-- Plugin config: `Green Hell/BepInEx/config/local.greenhell.autostart.cfg`
+- Plugin config: `Green Hell/BepInEx/config/local.ghserver.cfg`
+
+Set `Diagnostics/MemoryFindings = true` to record periodic Unity memory totals and loaded-object counts in `BepInEx/GHServer-MemoryFindings.log`.
 
 BepInEx is installed separately in the game directory. Keep this repository outside the Steam library; reinstalling Green Hell may remove the deployed plugin and loader, but not this source.
 

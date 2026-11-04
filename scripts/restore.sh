@@ -4,7 +4,7 @@ set -euo pipefail
 STEAM_ROOT="${STEAM_ROOT:-${HOME}/.local/share/Steam}"
 GAME_DIR="${GREEN_HELL_DIR:-${STEAM_ROOT}/steamapps/common/Green Hell}"
 PLUGIN_DIR="${GAME_DIR}/BepInEx/plugins/GHServer"
-CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.greenhell.autostart.cfg"
+CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.ghserver.cfg"
 
 rm -f -- "$PLUGIN_DIR/GHServer.dll"
 if [[ -d "$PLUGIN_DIR" ]]; then

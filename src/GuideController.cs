@@ -46,7 +46,6 @@ namespace GHServer
                     continue;
                 if (!Matches(control, Steps[_index].Target))
                     continue;
-                UIEventFindings.Record("guide-" + Steps[_index].Action, control);
                 PointerEventData pointer = new PointerEventData(EventSystem.current);
                 if (EventSystem.current != null)
                     EventSystem.current.SetSelectedGameObject(control.gameObject);

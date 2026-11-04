@@ -14,12 +14,12 @@ AUDIO_CONTROLLER_SOURCE="${PROJECT_DIR}/src/AudioController.cs"
 CAMERA_CONTROLLER_SOURCE="${PROJECT_DIR}/src/CameraController.cs"
 PERFORMANCE_CONTROLLER_SOURCE="${PROJECT_DIR}/src/PerformanceController.cs"
 RESOURCE_COORDINATOR_SOURCE="${PROJECT_DIR}/src/ResourceControllerCoordinator.cs"
-UI_FINDINGS_SOURCE="${PROJECT_DIR}/src/UIEventFindings.cs"
-CONTEXT_FINDINGS_SOURCE="${PROJECT_DIR}/src/ContextFindings.cs"
+MEMORY_FINDINGS_SOURCE="${PROJECT_DIR}/src/MemoryFindings.cs"
+WORLD_UI_SOURCE="${PROJECT_DIR}/src/WorldUIController.cs"
 GUIDE_SOURCE="${PROJECT_DIR}/src/GuideController.cs"
 GUIDE_CONFIG="${PROJECT_DIR}/config/guide.cfg"
 CONFIG_TEMPLATE="${PROJECT_DIR}/config/mod.cfg"
-CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.greenhell.autostart.cfg"
+CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.ghserver.cfg"
 BUILD_DIR="${PROJECT_DIR}/build"
 PLUGIN_DIR="${GAME_DIR}/BepInEx/plugins/GHServer"
 
@@ -29,7 +29,7 @@ for required in "$GAME_DIR/GH_Data/Managed/Assembly-CSharp.dll" \
     "$GAME_DIR/BepInEx/core/0Harmony.dll" \
     "$WINE" "$COMPILER" "$SOURCE" \
     "$AUDIO_CONTROLLER_SOURCE" "$CAMERA_CONTROLLER_SOURCE" "$PERFORMANCE_CONTROLLER_SOURCE" \
-    "$RESOURCE_COORDINATOR_SOURCE" "$UI_FINDINGS_SOURCE" "$CONTEXT_FINDINGS_SOURCE" "$GUIDE_SOURCE" "$CONFIG_TEMPLATE" "$GUIDE_CONFIG"; do
+    "$RESOURCE_COORDINATOR_SOURCE" "$MEMORY_FINDINGS_SOURCE" "$WORLD_UI_SOURCE" "$GUIDE_SOURCE" "$CONFIG_TEMPLATE" "$GUIDE_CONFIG"; do
     if [[ ! -f "$required" ]]; then
         printf 'Missing required file: %s\n' "$required" >&2
         exit 1
@@ -61,8 +61,8 @@ WINEPREFIX="$PREFIX" WINEDEBUG=-all "$WINE" "$COMPILER" \
     "$(windows_path "$CAMERA_CONTROLLER_SOURCE")" \
     "$(windows_path "$PERFORMANCE_CONTROLLER_SOURCE")" \
     "$(windows_path "$RESOURCE_COORDINATOR_SOURCE")" \
-    "$(windows_path "$UI_FINDINGS_SOURCE")" \
-    "$(windows_path "$CONTEXT_FINDINGS_SOURCE")" \
+    "$(windows_path "$MEMORY_FINDINGS_SOURCE")" \
+    "$(windows_path "$WORLD_UI_SOURCE")" \
     "$(windows_path "$GUIDE_SOURCE")"
 
 cp -f "$BUILD_DIR/GHServer.dll" "$PLUGIN_DIR/GHServer.dll"

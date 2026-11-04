@@ -6,24 +6,16 @@ GAME_DIR="${GREEN_HELL_DIR:-${STEAM_ROOT}/steamapps/common/Green Hell}"
 LOG_FILE="${GAME_DIR}/BepInEx/LogOutput.log"
 
 case "${1:-}" in
-    ""|--ui)
-        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-UI-findings.log"
-        FILTER='UI findings|event=(click|toggle-click|hover-enter|focus)'
-        ;;
-    --context)
-        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-ContextFindings.log"
-        FILTER='Context findings|screen=|selected=|object='
-        ;;
-    --cameras)
-        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-Camera.log"
-        FILTER=' (LIVE|KEEP LIVE|CHANGE|INACTIVE|DISABLE|REMOVE) depth='
+    ""|--memory)
+        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-MemoryFindings.log"
+        FILTER='scene=|  type='
         ;;
     --all)
         LOG_FILE="${GAME_DIR}/BepInEx/LogOutput.log"
         FILTER='GHServer'
         ;;
     *)
-        printf 'Usage: yarn log [--ui|--context|--all|--cameras]\n' >&2
+        printf 'Usage: yarn log [--memory|--all]\n' >&2
         exit 2
         ;;
 esac

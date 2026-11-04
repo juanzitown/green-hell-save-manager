@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -18,7 +17,6 @@ namespace GHServer
         private static readonly HashSet<string> CameraNamesToKeep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private static bool _eventsSubscribed;
         private static float _nextCameraScanTime;
-        private static string _cameraLogPath;
 
         internal static void Initialize(ConfigFile config)
         {
@@ -86,20 +84,6 @@ namespace GHServer
                 bool becameInactive = !isLive && LiveCameras.Remove(instanceId);
                 bool isKeptDuringLoading = loadingScreenActive && IsCameraKept(camera);
 
-                if (false && becameLive)
-                {
-                    WriteCameraLog((isKeptDuringLoading ? "KEEP LIVE " : "LIVE ")
-                        + "phase=" + phase + " " + details);
-                }
-                else if (isLive && !isNewCamera && !string.Equals(previousDetails, details, StringComparison.Ordinal)
-                    && false)
-                {
-                    WriteCameraLog("CHANGE " + details);
-                }
-                else if (becameInactive && false)
-                {
-                    WriteCameraLog("INACTIVE " + details);
-                }
                 CameraInventory[instanceId] = details;
 
                 bool shouldDisable = _disableCameraRendering.Value
@@ -117,8 +101,6 @@ namespace GHServer
             {
                 if (!seenCameras.Contains(camera.Key))
                 {
-                    if (false)
-                        WriteCameraLog("REMOVE " + camera.Value);
                     LiveCameras.Remove(camera.Key);
                     removedCameras.Add(camera.Key);
                 }
@@ -186,22 +168,6 @@ namespace GHServer
                 + ", scene=" + scene.name
                 + ", name=" + camera.name
                 + ", path=" + GetTransformPath(camera.transform);
-        }
-
-        private static void WriteCameraLog(string message)
-        {
-            if (string.IsNullOrEmpty(_cameraLogPath))
-                return;
-
-            try
-            {
-                File.AppendAllText(_cameraLogPath,
-                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message + Environment.NewLine);
-            }
-            catch (Exception exception)
-            {
-                Plugin.PluginLog.LogError("Could not write camera inventory log: " + exception.Message);
-            }
         }
 
         private static string GetTransformPath(Transform transform)
