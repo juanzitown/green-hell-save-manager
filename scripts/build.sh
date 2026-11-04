@@ -9,7 +9,7 @@ PREFIX="${COMPAT_DATA}/pfx"
 WINE="${PROTON_DIR}/files/bin/wine"
 COMPILER="${PREFIX}/drive_c/windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe"
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-SOURCE="${PROJECT_DIR}/src/GreenHellAutoStart.cs"
+SOURCE="${PROJECT_DIR}/src/GHServer.cs"
 AUDIO_CONTROLLER_SOURCE="${PROJECT_DIR}/src/AudioController.cs"
 CAMERA_CONTROLLER_SOURCE="${PROJECT_DIR}/src/CameraController.cs"
 PERFORMANCE_CONTROLLER_SOURCE="${PROJECT_DIR}/src/PerformanceController.cs"
@@ -18,10 +18,10 @@ UI_FINDINGS_SOURCE="${PROJECT_DIR}/src/UIEventFindings.cs"
 CONTEXT_FINDINGS_SOURCE="${PROJECT_DIR}/src/ContextFindings.cs"
 GUIDE_SOURCE="${PROJECT_DIR}/src/GuideController.cs"
 GUIDE_CONFIG="${PROJECT_DIR}/config/guide.cfg"
-CONFIG_TEMPLATE="${PROJECT_DIR}/config/local.greenhell.autostart.cfg"
+CONFIG_TEMPLATE="${PROJECT_DIR}/config/mod.cfg"
 CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.greenhell.autostart.cfg"
 BUILD_DIR="${PROJECT_DIR}/build"
-PLUGIN_DIR="${GAME_DIR}/BepInEx/plugins/GHSaveAutoStart"
+PLUGIN_DIR="${GAME_DIR}/BepInEx/plugins/GHServer"
 
 for required in "$GAME_DIR/GH_Data/Managed/Assembly-CSharp.dll" \
     "$GAME_DIR/GH_Data/Managed/UnityEngine.AudioModule.dll" \
@@ -47,7 +47,7 @@ mkdir -p "$BUILD_DIR" "$PLUGIN_DIR" "$(dirname -- "$CONFIG_FILE")"
 
 WINEPREFIX="$PREFIX" WINEDEBUG=-all "$WINE" "$COMPILER" \
     /nologo /target:library /langversion:6 \
-    "/out:$(windows_path "$BUILD_DIR/GreenHellAutoStart.dll")" \
+    "/out:$(windows_path "$BUILD_DIR/GHServer.dll")" \
     "/reference:$(windows_path "$GAME_DIR/BepInEx/core/BepInEx.dll")" \
     "/reference:$(windows_path "$GAME_DIR/BepInEx/core/0Harmony.dll")" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/Assembly-CSharp.dll")" \
@@ -65,9 +65,9 @@ WINEPREFIX="$PREFIX" WINEDEBUG=-all "$WINE" "$COMPILER" \
     "$(windows_path "$CONTEXT_FINDINGS_SOURCE")" \
     "$(windows_path "$GUIDE_SOURCE")"
 
-cp -f "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"
-if ! cmp -s "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"; then
-    printf 'Deployed plugin verification failed: %s\n' "$PLUGIN_DIR/GreenHellAutoStart.dll" >&2
+cp -f "$BUILD_DIR/GHServer.dll" "$PLUGIN_DIR/GHServer.dll"
+if ! cmp -s "$BUILD_DIR/GHServer.dll" "$PLUGIN_DIR/GHServer.dll"; then
+    printf 'Deployed plugin verification failed: %s\n' "$PLUGIN_DIR/GHServer.dll" >&2
     exit 1
 fi
 cp -f "$CONFIG_TEMPLATE" "$CONFIG_FILE"
@@ -77,4 +77,4 @@ if ! cmp -s "$CONFIG_TEMPLATE" "$CONFIG_FILE"; then
 fi
 cp -f "$GUIDE_CONFIG" "$(dirname -- "$CONFIG_FILE")/guide.cfg"
 printf 'Synced plugin config from %s\n' "$CONFIG_TEMPLATE"
-printf 'Built and deployed GreenHellAutoStart.dll to %s\n' "$PLUGIN_DIR"
+printf 'Built and deployed GHServer.dll to %s\n' "$PLUGIN_DIR"

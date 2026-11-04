@@ -7,20 +7,20 @@ LOG_FILE="${GAME_DIR}/BepInEx/LogOutput.log"
 
 case "${1:-}" in
     ""|--ui)
-        LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-UI-findings.log"
+        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-UI-findings.log"
         FILTER='UI findings|event=(click|toggle-click|hover-enter|focus)'
         ;;
     --context)
-        LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-ContextFindings.log"
+        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-ContextFindings.log"
         FILTER='Context findings|screen=|selected=|object='
         ;;
     --cameras)
-        LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-Camera.log"
+        LOG_FILE="${GAME_DIR}/BepInEx/GHServer-Camera.log"
         FILTER=' (LIVE|KEEP LIVE|CHANGE|INACTIVE|DISABLE|REMOVE) depth='
         ;;
     --all)
         LOG_FILE="${GAME_DIR}/BepInEx/LogOutput.log"
-        FILTER='Green Hell Auto Start|GreenHellAutoStart'
+        FILTER='GHServer'
         ;;
     *)
         printf 'Usage: yarn log [--ui|--context|--all|--cameras]\n' >&2
@@ -33,5 +33,5 @@ if [[ ! -f "$LOG_FILE" ]]; then
     exit 1
 fi
 
-printf 'Following Green Hell Auto Start logs from %s (Ctrl-C to stop)\n' "$LOG_FILE"
+printf 'Following GHServer logs from %s (Ctrl-C to stop)\n' "$LOG_FILE"
 tail -n 100 -F "$LOG_FILE" | grep --line-buffered -E "$FILTER"

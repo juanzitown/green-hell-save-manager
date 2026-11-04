@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
     internal static class GuideController
     {

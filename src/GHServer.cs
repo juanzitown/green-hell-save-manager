@@ -3,12 +3,13 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
-    [BepInPlugin("local.greenhell.autostart", "Green Hell Auto Start", "0.1.0")]
+    [BepInPlugin("local.greenhell.autostart", "GHServer", "0.1.0")]
     public sealed class Plugin : BaseUnityPlugin
     {
         internal static ConfigEntry<bool> AutoContinue;
+        internal static ConfigEntry<bool> Debug;
         internal static ManualLogSource PluginLog;
 
         private Harmony _harmony;
@@ -18,6 +19,8 @@ namespace GreenHellAutoStart
             PluginLog = Logger;
             AutoContinue = Config.Bind("General", "AutoContinue", true,
                 "Automatically continue the latest multiplayer host save after the main menu initializes.");
+            Debug = Config.Bind("General", "Debug", false,
+                "Enable UI and context diagnostic logging.");
             ResourceControllerCoordinator.Initialize(Config);
             UIEventFindings.Initialize();
             ContextFindings.Initialize();

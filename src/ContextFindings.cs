@@ -6,7 +6,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
     internal static class ContextFindings
     {
@@ -16,14 +16,17 @@ namespace GreenHellAutoStart
 
         internal static void Initialize()
         {
-            _path = Path.Combine(Paths.BepInExRootPath, "GreenHellAutoStart-ContextFindings.log");
+            if (Plugin.Debug == null || !Plugin.Debug.Value)
+                return;
+            _path = Path.Combine(Paths.BepInExRootPath, "GHServer-ContextFindings.log");
             try { File.WriteAllText(_path, "Context findings started " + DateTime.Now.ToString("O") + Environment.NewLine); }
             catch (Exception exception) { Plugin.PluginLog.LogError("Could not initialize context log: " + exception.Message); }
         }
 
         internal static void Update()
         {
-            if (string.IsNullOrEmpty(_path) || Time.unscaledTime < _next)
+            if (Plugin.Debug == null || !Plugin.Debug.Value
+                || string.IsNullOrEmpty(_path) || Time.unscaledTime < _next)
                 return;
             _next = Time.unscaledTime + 0.5f;
 

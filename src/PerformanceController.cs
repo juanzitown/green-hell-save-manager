@@ -1,7 +1,7 @@
 using BepInEx.Configuration;
 using UnityEngine;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
     internal static class PerformanceController
     {

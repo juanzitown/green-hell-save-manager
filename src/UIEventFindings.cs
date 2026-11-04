@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
     internal static class UIEventFindings
     {
@@ -18,7 +18,9 @@ namespace GreenHellAutoStart
 
         internal static void Initialize()
         {
-            _path = Path.Combine(Paths.BepInExRootPath, "GreenHellAutoStart-UI-findings.log");
+            if (Plugin.Debug == null || !Plugin.Debug.Value)
+                return;
+            _path = Path.Combine(Paths.BepInExRootPath, "GHServer-UI-findings.log");
             try
             {
                 File.WriteAllText(_path, "UI findings started " + DateTime.Now.ToString("O") + Environment.NewLine);
@@ -68,7 +70,7 @@ namespace GreenHellAutoStart
 
         internal static void Record(string eventName, Component component)
         {
-            if (component == null || string.IsNullOrEmpty(_path))
+            if (Plugin.Debug == null || !Plugin.Debug.Value || component == null || string.IsNullOrEmpty(_path))
                 return;
             try
             {
@@ -90,6 +92,8 @@ namespace GreenHellAutoStart
 
         internal static void Update()
         {
+            if (Plugin.Debug == null || !Plugin.Debug.Value)
+                return;
             WatchVisibilityText();
             Type selectorType = typeof(MainMenuManager).Assembly.GetType("UISelectButton");
             if (selectorType == null || string.IsNullOrEmpty(_path))

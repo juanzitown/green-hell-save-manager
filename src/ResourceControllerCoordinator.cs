@@ -1,6 +1,6 @@
 using BepInEx.Configuration;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
     internal static class ResourceControllerCoordinator
     {

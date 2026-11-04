@@ -7,7 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace GreenHellAutoStart
+namespace GHServer
 {
     internal static class CameraController
     {
