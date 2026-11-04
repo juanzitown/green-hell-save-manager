@@ -6,7 +6,15 @@ GAME_DIR="${GREEN_HELL_DIR:-${STEAM_ROOT}/steamapps/common/Green Hell}"
 LOG_FILE="${GAME_DIR}/BepInEx/LogOutput.log"
 
 case "${1:-}" in
-    ""|--cameras)
+    ""|--ui)
+        LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-UI-findings.log"
+        FILTER='UI findings|event=(click|toggle-click|hover-enter|focus)'
+        ;;
+    --context)
+        LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-ContextFindings.log"
+        FILTER='Context findings|screen=|selected=|object='
+        ;;
+    --cameras)
         LOG_FILE="${GAME_DIR}/BepInEx/GreenHellAutoStart-Camera.log"
         FILTER=' (LIVE|KEEP LIVE|CHANGE|INACTIVE|DISABLE|REMOVE) depth='
         ;;
@@ -15,7 +23,7 @@ case "${1:-}" in
         FILTER='Green Hell Auto Start|GreenHellAutoStart'
         ;;
     *)
-        printf 'Usage: yarn log [--all|--cameras]\n' >&2
+        printf 'Usage: yarn log [--ui|--context|--all|--cameras]\n' >&2
         exit 2
         ;;
 esac

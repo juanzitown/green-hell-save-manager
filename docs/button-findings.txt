@@ -1,0 +1,51 @@
+Green Hell UI button findings
+
+Online visibility selector:
+  Right arrow object: UISelectButtonArrow
+  Right arrow name: >
+  Right arrow path:
+    MainMenuCanvas/MenuChooseMode/OnlineVisibility/OnlineVisibility/Selector/RightArrow
+  Left arrow name: <
+  Left arrow path:
+    MainMenuCanvas/MenuChooseMode/OnlineVisibility/OnlineVisibility/Selector/LeftArrow
+
+Other discovered buttons:
+  Multiplayer:
+    type: UIButtonEx
+    name: MULTIPLAYER
+    path: MainMenuCanvas/MainMenu/Buttons/Multiplayer
+    listener: MainMenu.OnMultiplayer
+
+  Host Game:
+    type: UIButtonEx
+    name: HOST GAME
+    path: MainMenuCanvas/MenuJoinOrHost/Buttons/Host
+    listener: MainMenuJoinOrHost.OnHost
+
+  Back from choose mode:
+    type: UIButtonEx
+    name: BACK
+    path: MainMenuCanvas/MenuChooseMode/Back
+    listener: MainMenuChooseMode.OnBack
+
+  Continue:
+    type: UIButtonEx
+    name: Continue
+    text: CONTINUE
+    path: MainMenuCanvas/MenuChooseMode/Buttons/Continue
+
+Captured guide run:
+  Multiplayer -> Host -> RightArrow -> Continue
+  The findings log confirms each step produced hover-enter and click events.
+
+Note: no slider event was present in the current findings log. Sliders need
+an additional pointer-drag/value-change finding pass if we want to document
+their exact paths and values.
+
+The arrows have zero persistent Unity listeners. Their behavior is probably
+implemented by UISelectButtonArrow itself or by runtime listeners.
+
+The current discovery log records the clicked arrow but does not record the
+selector value before and after the click. Do not automate multiple clicks
+until the selector value transition is captured; one extra click could select
+Public instead of Friends Only.

@@ -10,11 +10,14 @@ WINE="${PROTON_DIR}/files/bin/wine"
 COMPILER="${PREFIX}/drive_c/windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe"
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="${PROJECT_DIR}/src/GreenHellAutoStart.cs"
-UI_UTILS_SOURCE="${PROJECT_DIR}/src/UIUtils.cs"
 AUDIO_CONTROLLER_SOURCE="${PROJECT_DIR}/src/AudioController.cs"
 CAMERA_CONTROLLER_SOURCE="${PROJECT_DIR}/src/CameraController.cs"
 PERFORMANCE_CONTROLLER_SOURCE="${PROJECT_DIR}/src/PerformanceController.cs"
 RESOURCE_COORDINATOR_SOURCE="${PROJECT_DIR}/src/ResourceControllerCoordinator.cs"
+UI_FINDINGS_SOURCE="${PROJECT_DIR}/src/UIEventFindings.cs"
+CONTEXT_FINDINGS_SOURCE="${PROJECT_DIR}/src/ContextFindings.cs"
+GUIDE_SOURCE="${PROJECT_DIR}/src/GuideController.cs"
+GUIDE_CONFIG="${PROJECT_DIR}/config/guide.cfg"
 CONFIG_TEMPLATE="${PROJECT_DIR}/config/local.greenhell.autostart.cfg"
 CONFIG_FILE="${GAME_DIR}/BepInEx/config/local.greenhell.autostart.cfg"
 BUILD_DIR="${PROJECT_DIR}/build"
@@ -24,9 +27,9 @@ for required in "$GAME_DIR/GH_Data/Managed/Assembly-CSharp.dll" \
     "$GAME_DIR/GH_Data/Managed/UnityEngine.AudioModule.dll" \
     "$GAME_DIR/BepInEx/core/BepInEx.dll" \
     "$GAME_DIR/BepInEx/core/0Harmony.dll" \
-    "$WINE" "$COMPILER" "$SOURCE" "$UI_UTILS_SOURCE" \
+    "$WINE" "$COMPILER" "$SOURCE" \
     "$AUDIO_CONTROLLER_SOURCE" "$CAMERA_CONTROLLER_SOURCE" "$PERFORMANCE_CONTROLLER_SOURCE" \
-    "$RESOURCE_COORDINATOR_SOURCE" "$CONFIG_TEMPLATE"; do
+    "$RESOURCE_COORDINATOR_SOURCE" "$UI_FINDINGS_SOURCE" "$CONTEXT_FINDINGS_SOURCE" "$GUIDE_SOURCE" "$CONFIG_TEMPLATE" "$GUIDE_CONFIG"; do
     if [[ ! -f "$required" ]]; then
         printf 'Missing required file: %s\n' "$required" >&2
         exit 1
@@ -54,11 +57,13 @@ WINEPREFIX="$PREFIX" WINEDEBUG=-all "$WINE" "$COMPILER" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.UI.dll")" \
     "/reference:$(windows_path "$GAME_DIR/GH_Data/Managed/UnityEngine.AudioModule.dll")" \
     "$(windows_path "$SOURCE")" \
-    "$(windows_path "$UI_UTILS_SOURCE")" \
     "$(windows_path "$AUDIO_CONTROLLER_SOURCE")" \
     "$(windows_path "$CAMERA_CONTROLLER_SOURCE")" \
     "$(windows_path "$PERFORMANCE_CONTROLLER_SOURCE")" \
-    "$(windows_path "$RESOURCE_COORDINATOR_SOURCE")"
+    "$(windows_path "$RESOURCE_COORDINATOR_SOURCE")" \
+    "$(windows_path "$UI_FINDINGS_SOURCE")" \
+    "$(windows_path "$CONTEXT_FINDINGS_SOURCE")" \
+    "$(windows_path "$GUIDE_SOURCE")"
 
 cp -f "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"
 if ! cmp -s "$BUILD_DIR/GreenHellAutoStart.dll" "$PLUGIN_DIR/GreenHellAutoStart.dll"; then
@@ -70,5 +75,6 @@ if ! cmp -s "$CONFIG_TEMPLATE" "$CONFIG_FILE"; then
     printf 'Config sync verification failed: %s\n' "$CONFIG_FILE" >&2
     exit 1
 fi
+cp -f "$GUIDE_CONFIG" "$(dirname -- "$CONFIG_FILE")/guide.cfg"
 printf 'Synced plugin config from %s\n' "$CONFIG_TEMPLATE"
 printf 'Built and deployed GreenHellAutoStart.dll to %s\n' "$PLUGIN_DIR"

@@ -12,8 +12,6 @@ namespace GreenHellAutoStart
     internal static class CameraController
     {
         private static ConfigEntry<bool> _disableCameraRendering;
-        private static ConfigEntry<bool> _logCameraInventory;
-        private static ConfigEntry<string> _cameraNamesToKeep;
         private static readonly Dictionary<Camera, bool> OriginalCameraStates = new Dictionary<Camera, bool>();
         private static readonly Dictionary<int, string> CameraInventory = new Dictionary<int, string>();
         private static readonly HashSet<int> LiveCameras = new HashSet<int>();
@@ -26,25 +24,9 @@ namespace GreenHellAutoStart
         {
             _disableCameraRendering = config.Bind("Graphics", "DisableCameraRendering", true,
                 "Disable each discovered scene camera unless its name or path appears in CameraNamesToKeep.");
-            _logCameraInventory = config.Bind("Graphics", "LogCameraInventory", false,
-                "Write camera discovery, change, removal, keep, and disable events to a separate log.");
-            _cameraNamesToKeep = config.Bind("Graphics", "CameraNamesToKeep", "LoadingCamera,InventoryCamera",
-                "Comma/semicolon-separated camera names or hierarchy paths that must remain enabled.");
             CameraNamesToKeep.Clear();
-            string[] keepEntries = _cameraNamesToKeep.Value.Split(new[] { ',', ';', '\n', '\r' },
-                StringSplitOptions.RemoveEmptyEntries);
-            foreach (string entry in keepEntries)
-                CameraNamesToKeep.Add(entry.Trim());
+            CameraNamesToKeep.Add("Main Camera");
 
-            _cameraLogPath = Path.Combine(Paths.BepInExRootPath, "GreenHellAutoStart-Camera.log");
-            try
-            {
-                File.WriteAllText(_cameraLogPath, "Camera inventory: depth, scene, name, path" + Environment.NewLine);
-            }
-            catch (Exception exception)
-            {
-                Plugin.PluginLog.LogError("Could not initialize camera inventory log: " + exception);
-            }
 
             SceneManager.sceneLoaded += OnSceneLoaded;
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
@@ -55,7 +37,7 @@ namespace GreenHellAutoStart
         {
             if (Time.unscaledTime < _nextCameraScanTime)
                 return;
-            _nextCameraScanTime = Time.unscaledTime + 0.1f;
+            _nextCameraScanTime = Time.unscaledTime + 1.0f;
             ScanCameras();
         }
 
@@ -104,17 +86,17 @@ namespace GreenHellAutoStart
                 bool becameInactive = !isLive && LiveCameras.Remove(instanceId);
                 bool isKeptDuringLoading = loadingScreenActive && IsCameraKept(camera);
 
-                if (isLive && _logCameraInventory.Value && becameLive)
+                if (false && becameLive)
                 {
                     WriteCameraLog((isKeptDuringLoading ? "KEEP LIVE " : "LIVE ")
                         + "phase=" + phase + " " + details);
                 }
                 else if (isLive && !isNewCamera && !string.Equals(previousDetails, details, StringComparison.Ordinal)
-                    && _logCameraInventory.Value)
+                    && false)
                 {
                     WriteCameraLog("CHANGE " + details);
                 }
-                else if (becameInactive && _logCameraInventory.Value)
+                else if (becameInactive && false)
                 {
                     WriteCameraLog("INACTIVE " + details);
                 }
@@ -135,7 +117,7 @@ namespace GreenHellAutoStart
             {
                 if (!seenCameras.Contains(camera.Key))
                 {
-                    if (_logCameraInventory.Value)
+                    if (false)
                         WriteCameraLog("REMOVE " + camera.Value);
                     LiveCameras.Remove(camera.Key);
                     removedCameras.Add(camera.Key);
@@ -185,8 +167,6 @@ namespace GreenHellAutoStart
                 return;
 
             camera.enabled = false;
-            if (_logCameraInventory.Value)
-                WriteCameraLog("DISABLE phase=" + phase + " " + details);
         }
 
         private static void RestoreCamera(Camera camera)
