@@ -1,11 +1,25 @@
 {
-  "name": "ghserver",
+  "name": "green-hell-save-manager",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bash scripts/build.sh",
-    "release": "bash scripts/release.sh",
-    "restore": "bash scripts/restore.sh",
-    "log": "bash scripts/log.sh"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
   }
 }
