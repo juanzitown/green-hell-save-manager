@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, ExternalLink, HardDriveDownload, MoreHorizontal, Search, Upload } from 'lucide-react';
+import { ExternalLink, HardDriveDownload, Search, Upload } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import type { Profile, SaveFile } from '../App';
+import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
+import { Avatar } from '../components/ui/Avatar';
 
-type Props = { profile: Profile; setProfiles: React.Dispatch<React.SetStateAction<Profile[]>>; refreshToken: number };
+type Props = { profile: Profile; setProfiles: React.Dispatch<React.SetStateAction<Profile[]>>; refreshToken: number; onEditProfile: () => void };
 type NativeSave = { name: string; path: string; size: number; modified: number };
 type SaveLocation = { path: string; files: NativeSave[] };
 
@@ -18,7 +21,7 @@ function toSaveFile(file: NativeSave, source: string): SaveFile {
   return { id: file.path, name: file.name, size: `${Math.max(1, Math.round(file.size / 1024))} KB`, modified: file.modified, source };
 }
 
-export function ProfilePage({ profile, setProfiles, refreshToken }: Props) {
+export function ProfilePage({ profile, setProfiles, refreshToken, onEditProfile }: Props) {
   const [query, setQuery] = useState('');
   const [folderPath, setFolderPath] = useState('');
   const [folderStatus, setFolderStatus] = useState('Finding save folder...');
@@ -75,10 +78,10 @@ export function ProfilePage({ profile, setProfiles, refreshToken }: Props) {
   useEffect(() => { void loadSaves(); }, [profile.id, refreshToken]);
 
   return <div className="content-wrap">
-    <div className="profile-heading"><div className="large-avatar">{profile.icon}</div><div><div className="eyebrow">{profile.id === 'my' ? 'MY PROFILE' : 'BACKUP PROFILE'}</div><h1>{profile.name}</h1><p>{profile.saves.length} saved file{profile.saves.length === 1 ? '' : 's'}</p></div><button className="more-button"><MoreHorizontal /></button></div>
-    <div className="toolbar"><div className="search-box"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saves" /></div><button onClick={() => fileInput.current?.click()} className="primary-button"><Upload size={16} /> Import saves</button><input ref={fileInput} onChange={(event) => { void importFiles(event.target.files); event.target.value = ''; }} type="file" multiple accept=".sav" hidden /></div>
+    <div className="profile-heading">{profile.id === 'my' && <Avatar size="lg" />}<div><div className="eyebrow">{profile.id === 'my' ? 'MY PROFILE' : 'BACKUP PROFILE'}</div><h1>{profile.name}</h1><p>{profile.saves.length} saved file{profile.saves.length === 1 ? '' : 's'}</p></div><div className="more-button"><IconButton icon="pencil" tooltip="Edit profile" size="sm" onClick={onEditProfile} /></div></div>
+    <div className="toolbar"><div className="search-box"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saves" /></div><Button label="Import saves" icon="upload" onClick={() => fileInput.current?.click()} /><input ref={fileInput} onChange={(event) => { void importFiles(event.target.files); event.target.value = ''; }} type="file" multiple accept=".sav" hidden /></div>
     <div className="folder-status"><HardDriveDownload size={14} />{folderPath ? <button className="folder-link" onClick={openFolder} title="Open in file explorer">{folderPath}<ExternalLink size={12} /></button> : <span>{folderStatus}</span>} {folderPath && <span>· {folderStatus}</span>}</div>
-    <div className="save-area">{saves.length === 0 ? <div className="empty-state"><div className="empty-icon"><Upload size={22} /></div><h2>No saves yet</h2><p>Import or drag Green Hell <code>.sav</code> files into this profile.</p><button onClick={() => fileInput.current?.click()} className="outline-button">Import saves</button></div> : <div className="file-grid">{saves.map((save) => <article className="file-card" key={save.id}><div className="file-icon"><span>.sav</span></div><div className="file-info"><strong>{save.name}</strong><span>{save.size} · {timeAgo(save.modified)}</span><small>{save.source}</small></div>{profile.id !== 'my' && <button className="card-action" onClick={() => copySave(save)} title="Copy save to Steam"><HardDriveDownload size={16} /></button>}<button className="card-action" onClick={() => downloadSave(save)} title="Download save"><Download size={16} /></button></article>)}</div>}</div>
+    <div className="save-area">{saves.length === 0 ? <div className="empty-state"><div className="empty-icon"><Upload size={22} /></div><h2>No saves yet</h2><p>Import or drag Green Hell <code>.sav</code> files into this profile.</p><Button label="Import saves" icon="upload" variant="outline" onClick={() => fileInput.current?.click()} /></div> : <div className="file-grid">{saves.map((save) => <article className="file-card" key={save.id}><div className="file-icon"><span>.sav</span></div><div className="file-info"><strong>{save.name}</strong><span>{save.size} · {timeAgo(save.modified)}</span><small>{save.source}</small></div><div className="file-actions">{profile.id !== 'my' && <IconButton icon="hardDriveDownload" tooltip="Copy save to Steam" size="sm" onClick={() => copySave(save)} />}<IconButton icon="download" tooltip="Download save" size="sm" onClick={() => downloadSave(save)} /></div></article>)}</div>}</div>
     <div className="drop-hint"><Upload size={15} /> Drop files anywhere in the window to add them to <strong>{profile.name}</strong></div>
   </div>;
 }

@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { Button } from './ui/Button';
+import { IconButton } from './ui/IconButton';
 
-type Props = { onClose: () => void; onSubmit: (name: string, icon: string) => void };
+type Props = { onClose: () => void; onSubmit: (name: string) => void; initialName?: string };
 
-export function ProfileFormModal({ onClose, onSubmit }: Props) {
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState('🌱');
-  const submit = () => { if (name.trim()) onSubmit(name.trim(), icon); };
+export function ProfileFormModal({ onClose, onSubmit, initialName = '' }: Props) {
+  const [name, setName] = useState(initialName);
+  const editing = Boolean(initialName);
+  const submit = () => { if (name.trim()) onSubmit(name.trim()); };
   return <div className="modal-backdrop"><div className="modal">
-    <button className="close-button" onClick={onClose}><X size={18} /></button><div className="eyebrow">NEW PROFILE</div><h2>Create a profile</h2><p>Each profile has its own isolated Green Hell saves.</p>
-    <div className="profile-form-row"><button className="form-icon" onClick={() => setIcon(icon === '🌱' ? '🌿' : '🌱')}>{icon}</button><input autoFocus value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submit()} placeholder="Profile name" /></div>
-    <div className="modal-actions"><button className="outline-button" onClick={onClose}>Cancel</button><button className="primary-button" onClick={submit}>Create profile</button></div>
+    <div className="close-button"><IconButton icon="close" tooltip="Close" size="sm" onClick={onClose} /></div><div className="eyebrow">{editing ? 'EDIT PROFILE' : 'NEW PROFILE'}</div><h2>{editing ? 'Edit profile' : 'Create a profile'}</h2><p>{editing ? 'Update this profile name.' : 'Each profile has its own isolated Green Hell saves.'}</p>
+    <div className="profile-form-row"><input autoFocus value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submit()} placeholder="Profile name" /></div>
+    <div className="modal-actions"><Button label="Cancel" variant="outline" onClick={onClose} /><Button label={editing ? 'Save changes' : 'Create profile'} onClick={submit} disabled={!name.trim()} /></div>
   </div></div>;
 }
