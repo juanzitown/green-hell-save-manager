@@ -10,20 +10,30 @@ The Linux development environment uses the configured Debian Distrobox:
 npm run dev
 ```
 
-## Releases
+## Desktop releases
 
 Keep the version in `package.json`, `src-tauri/Cargo.toml`, and
 `src-tauri/tauri.conf.json` synchronized before building a release.
+
+Commit all changes and authenticate GitHub CLI before publishing:
+
+```bash
+gh auth login -h github.com -p https -w
+```
+
+The publishing script builds the selected desktop package, pushes the current
+branch and version tag, and creates or updates the GitHub Release. It does not
+produce a browser/web release.
 
 ### Linux
 
 Run on the configured Linux development machine:
 
 ```bash
-yarn release:linux
+yarn publish:linux
 ```
 
-This builds AppImage and Debian packages under:
+This publishes AppImage and Debian packages generated under:
 
 ```text
 src-tauri/target/release/bundle/appimage/
@@ -36,10 +46,10 @@ Run on a Windows machine with the Tauri prerequisites, Node.js, Rust, and
 WebView2 installed:
 
 ```powershell
-yarn release:windows
+yarn publish:windows
 ```
 
-This builds an NSIS installer under:
+Run this from Git Bash. It publishes the NSIS installer generated under:
 
 ```text
 src-tauri\target\release\bundle\nsis\
