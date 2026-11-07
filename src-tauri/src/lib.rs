@@ -1,64 +1,33 @@
-use serde::Serialize;
+mod save_scanner;
+
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use tauri::Manager;
+use save_scanner::{SaveLocation, steam_folder};
 
-#[derive(Debug, Serialize)]
-pub struct SaveFileInfo { pub name: String, pub path: String, pub size: u64, pub modified: u64 }
+#[tauri::command]
+fn find_green_hell_saves() -> Vec<SaveLocation> { save_scanner::find() }
 
-#[derive(Debug, Serialize)]
-pub struct SaveLocation { pub path: String, pub files: Vec<SaveFileInfo> }
-
-fn candidate_roots() -> Vec<PathBuf> {
-    let mut roots = Vec::new();
-    if let Some(home) = dirs::home_dir() {
-        roots.push(home.join(".local/share/Steam"));
-        roots.push(home.join(".steam/steam"));
-        roots.push(home.join(".steam/root"));
-        roots.push(home.join(".var/app/com.valvesoftware.Steam/.local/share/Steam"));
-    }
-    if let Ok(steam) = std::env::var("STEAM_ROOT") { roots.push(PathBuf::from(steam)); }
-    if let Ok(program_files) = std::env::var("PROGRAMFILES(X86)") { roots.push(PathBuf::from(program_files).join("Steam")); }
-    if let Ok(program_files) = std::env::var("PROGRAMFILES") { roots.push(PathBuf::from(program_files).join("Steam")); }
-    roots
-}
-
-fn inspect_save_folder(path: &Path, found: &mut Vec<SaveLocation>) {
-    let Ok(entries) = fs::read_dir(path) else { return; };
-    let mut saves = Vec::new();
-    for entry in entries.flatten() {
-        let entry_path = entry.path();
-        if entry_path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("sav")) {
-            if let Ok(metadata) = entry_path.metadata() {
-                let modified = metadata.modified().ok().and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok()).map(|time| time.as_millis() as u64).unwrap_or(0);
-                saves.push(SaveFileInfo { name: entry_path.file_name().unwrap_or_default().to_string_lossy().to_string(), path: entry_path.display().to_string(), size: metadata.len(), modified });
-            }
-        }
-    }
-    if !saves.is_empty() {
-        saves.sort_by(|a, b| b.modified.cmp(&a.modified));
-        found.push(SaveLocation { path: path.display().to_string(), files: saves });
-    }
+#[tauri::command]
+fn find_profile_saves(app: tauri::AppHandle, profile_id: String) -> Result<SaveLocation, String> {
+    let folder = profile_save_dir(&app, &profile_id)?;
+    fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
+    Ok(save_scanner::scan_folder(&folder))
 }
 
 #[tauri::command]
-fn find_green_hell_saves() -> Vec<SaveLocation> {
-    let mut locations = Vec::new();
-    for root in candidate_roots() {
-        let userdata = root.join("userdata");
-        let Ok(accounts) = fs::read_dir(userdata) else { continue; };
-        for account in accounts.flatten() {
-            if !account.path().is_dir() { continue; }
-            let save_folder = account.path().join("815370").join("remote");
-            if save_folder.is_dir() { inspect_save_folder(&save_folder, &mut locations); }
-        }
-    }
-    locations.sort_by(|a, b| b.files.first().map(|file| file.modified).cmp(&a.files.first().map(|file| file.modified)));
-    locations.dedup_by(|a, b| a.path == b.path);
-    locations
+fn open_folder(path: String) -> Result<(), String> {
+    let folder = PathBuf::from(path);
+    if !folder.is_dir() { return Err("Folder does not exist".to_string()); }
+    #[cfg(target_os = "windows")]
+    let result = Command::new("explorer").arg(&folder).spawn();
+    #[cfg(target_os = "macos")]
+    let result = Command::new("open").arg(&folder).spawn();
+    #[cfg(target_os = "linux")]
+    let result = Command::new("distrobox-host-exec").arg("xdg-open").arg(&folder).spawn().or_else(|_| Command::new("xdg-open").arg(&folder).spawn());
+    result.map(|_| ()).map_err(|error| error.to_string())
 }
-
-#[tauri::command]
-fn read_save_file(path: String) -> Result<Vec<u8>, String> { fs::read(path).map_err(|error| error.to_string()) }
 
 #[tauri::command]
 fn export_save_file(path: String) -> Result<String, String> {
@@ -71,10 +40,53 @@ fn export_save_file(path: String) -> Result<String, String> {
     Ok(destination.display().to_string())
 }
 
+fn profile_save_dir(app: &tauri::AppHandle, profile_id: &str) -> Result<PathBuf, String> {
+    app.path().app_data_dir().map_err(|error| error.to_string()).map(|dir| dir.join("profiles").join(profile_id).join("saves"))
+}
+
+fn safe_save_name(name: &str) -> Result<String, String> {
+    let safe = Path::new(name).file_name().ok_or_else(|| "Invalid save filename".to_string())?.to_string_lossy().to_string();
+    if !safe.to_lowercase().ends_with(".sav") { return Err("Only .sav files can be uploaded".to_string()); }
+    Ok(safe)
+}
+
+#[tauri::command]
+fn upload_save_to_profile(app: tauri::AppHandle, profile_id: String, name: String, bytes: Vec<u8>) -> Result<String, String> {
+    let name = safe_save_name(&name)?;
+    let destination_dir = if profile_id == "my" { steam_folder()? } else { profile_save_dir(&app, &profile_id)? };
+    fs::create_dir_all(&destination_dir).map_err(|error| error.to_string())?;
+    let destination = destination_dir.join(name);
+    fs::write(&destination, bytes).map_err(|error| error.to_string())?;
+    Ok(destination.display().to_string())
+}
+
+#[tauri::command]
+fn upload_save_paths(app: tauri::AppHandle, profile_id: String, paths: Vec<String>) -> Result<Vec<String>, String> {
+    let destination_dir = if profile_id == "my" { steam_folder()? } else { profile_save_dir(&app, &profile_id)? };
+    fs::create_dir_all(&destination_dir).map_err(|error| error.to_string())?;
+    let mut uploaded = Vec::new();
+    for path in paths {
+        let source = PathBuf::from(&path);
+        let name = safe_save_name(source.file_name().unwrap_or_default().to_string_lossy().as_ref())?;
+        let destination = destination_dir.join(name);
+        fs::copy(source, &destination).map_err(|error| error.to_string())?;
+        uploaded.push(destination.display().to_string());
+    }
+    Ok(uploaded)
+}
+
+#[tauri::command]
+fn copy_profile_save_to_steam(app: tauri::AppHandle, profile_id: String, name: String) -> Result<String, String> {
+    let source = profile_save_dir(&app, &profile_id)?.join(safe_save_name(&name)?);
+    let destination = steam_folder()?.join(source.file_name().unwrap());
+    fs::copy(source, &destination).map_err(|error| error.to_string())?;
+    Ok(destination.display().to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![find_green_hell_saves, read_save_file, export_save_file])
+        .invoke_handler(tauri::generate_handler![find_green_hell_saves, find_profile_saves, open_folder, export_save_file, upload_save_to_profile, upload_save_paths, copy_profile_save_to_steam])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running Green Hell Save Manager");
 }

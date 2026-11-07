@@ -1,1 +1,1 @@
-{}
+{"default":{"identifier":"default","description":"Permissions for the Green Hell Save Manager desktop window","local":true,"windows":["main"],"permissions":["core:default","core:event:default","core:event:allow-listen"]}}

@@ -147,6 +147,8 @@ Update this file during development. For each checkpoint, record:
 
 - Phase: Phase 01
 - Status: In progress — frontend skeleton and local profile prototype created
-- Completed: Tauri/Vite package setup, Tauri configuration scaffold, game-view UI with profile-only sidebar, `My` as the default profile, separated `VerticalMenu`, `ProfilePage`, and `ProfileFormModal` components, isolated in-memory save lists, sorting, search, drag-and-drop/import prototype, browser-testable game-folder selection, `.sav` listing, downloaded save files, Rust toolchain installation, and Steam-root detection for the fixed `userdata/<SteamID>/815370/remote` path.
+- Completed: Tauri/Vite package setup, Tauri configuration scaffold, game-view UI with profile-only sidebar, `My Profile` as the default profile, separated `VerticalMenu`, `ProfilePage`, and `ProfileFormModal` components, isolated profile save lists, sorting, search, Tauri-only `.sav` listing/download/upload, direct uploads from `My Profile` to Steam, backup uploads for other profiles, `Copy Save` from backup profiles to Steam, drag-and-drop upload, and Steam-root detection for the fixed `userdata/<SteamID>/815370/remote` path.
+- Completed: `npm run dev` now launches the Tauri desktop app through the Debian Distrobox container; Rust save discovery is separated into `src-tauri/src/save_scanner.rs`, with shared profile-directory and filename validation helpers in `lib.rs`.
+- Completed: Removed mocked saves/profiles, Steam detection now resolves App ID `815370` even when `remote` contains no saves, backup profiles reload from native storage, and detected folder paths open in the OS file explorer.
 - Open: Load detected saves directly from the Tauri backend, implement native export/restore, persist profiles, and add Steam lookup.
 - Next step: Run `npm run tauri dev` and verify detection against the local Steam/Proton installation.
