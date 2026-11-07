@@ -63,20 +63,36 @@ fi
 readonly BRANCH="$(git branch --show-current)"
 [[ -n "$BRANCH" ]] || fail "Releases cannot be created from a detached HEAD."
 
-gh auth status >/dev/null 2>&1 ||
-  fail "GitHub CLI is not authenticated. Run: gh auth login -h github.com -p https -w"
-
-git fetch origin --tags
-
 readonly TAG="v$PACKAGE_VERSION"
 readonly HEAD_COMMIT="$(git rev-parse HEAD)"
-tag_exists=false
+local_tag_exists=false
+remote_tag_exists=false
+
+gh auth status >/dev/null 2>&1 ||
+  fail "GitHub CLI is not authenticated. Run: gh auth login -h github.com -p https -w"
 
 if git rev-parse --verify --quiet "refs/tags/$TAG" >/dev/null; then
   readonly TAG_COMMIT="$(git rev-list -n 1 "$TAG")"
   [[ "$TAG_COMMIT" == "$HEAD_COMMIT" ]] ||
     fail "$TAG already points to another commit. Increase the app version first."
-  tag_exists=true
+  local_tag_exists=true
+fi
+
+readonly REMOTE_TAG_REFS="$(
+  git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}"
+)"
+
+if [[ -n "$REMOTE_TAG_REFS" ]]; then
+  remote_tag_exists=true
+  REMOTE_TAG_COMMIT="$(
+    awk '$2 ~ /\^\{\}$/ { print $1; exit }' <<<"$REMOTE_TAG_REFS"
+  )"
+  if [[ -z "$REMOTE_TAG_COMMIT" ]]; then
+    REMOTE_TAG_COMMIT="$(awk 'NR == 1 { print $1 }' <<<"$REMOTE_TAG_REFS")"
+  fi
+  readonly REMOTE_TAG_COMMIT
+  [[ "$REMOTE_TAG_COMMIT" == "$HEAD_COMMIT" ]] ||
+    fail "Remote $TAG already points to another commit. Increase the app version first."
 fi
 
 echo "Building Green Hell Save Manager v$PACKAGE_VERSION for $PLATFORM..."
@@ -104,11 +120,14 @@ done
 
 git push origin "$BRANCH"
 
-if [[ "$tag_exists" == false ]]; then
+if [[ "$local_tag_exists" == false && "$remote_tag_exists" == false ]]; then
   git tag -a "$TAG" -m "Green Hell Save Manager $TAG"
+  local_tag_exists=true
 fi
 
-git push origin "$TAG"
+if [[ "$remote_tag_exists" == false ]]; then
+  git push origin "refs/tags/$TAG"
+fi
 
 if gh release view "$TAG" >/dev/null 2>&1; then
   gh release upload "$TAG" "${assets[@]}" --clobber
