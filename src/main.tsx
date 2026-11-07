@@ -4,7 +4,8 @@ import { App } from './App';
 import './styles.css';
 import './components.css';
 import './components/ui/controls.css';
+import { ProfilesProvider } from './contexts/ProfilesContext';
 
 createRoot(document.getElementById('root')!).render(
-  <React.StrictMode><App /></React.StrictMode>,
+  <React.StrictMode><ProfilesProvider><App /></ProfilesProvider></React.StrictMode>,
 );

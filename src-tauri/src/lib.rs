@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::Manager;
 use save_scanner::{SaveLocation, steam_folder};
+use tauri_plugin_sql::{Migration, MigrationKind};
 
 #[tauri::command]
 fn find_green_hell_saves() -> Vec<SaveLocation> { save_scanner::find() }
@@ -85,7 +86,14 @@ fn copy_profile_save_to_steam(app: tauri::AppHandle, profile_id: String, name: S
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let migrations = vec![Migration {
+        version: 1,
+        description: "create_profiles_table",
+        sql: "CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, steam_id TEXT, is_primary INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL); INSERT OR IGNORE INTO profiles (id, name, steam_id, is_primary, created_at) VALUES ('my', 'My Profile', NULL, 1, unixepoch());",
+        kind: MigrationKind::Up,
+    }];
     tauri::Builder::default()
+        .plugin(tauri_plugin_sql::Builder::default().add_migrations("sqlite:green-hell-save-manager.db", migrations).build())
         .invoke_handler(tauri::generate_handler![find_green_hell_saves, find_profile_saves, open_folder, export_save_file, upload_save_to_profile, upload_save_paths, copy_profile_save_to_steam])
         .run(tauri::generate_context!())
         .expect("error while running Green Hell Save Manager");
