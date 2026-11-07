@@ -1,11 +1,13 @@
 {
   "name": "green-hell-save-manager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "distrobox enter debian -- npm run tauri dev",
+    "dev": "distrobox enter debian -- bash -lc 'export PATH=\"/usr/bin:/bin:$HOME/.cargo/bin\"; npm run tauri dev'",
     "frontend:dev": "vite",
     "build": "tsc && vite build",
+    "release:linux": "distrobox enter debian -- bash -lc 'export PATH=\"/usr/bin:/bin:$HOME/.cargo/bin\"; npm run tauri build -- --bundles appimage,deb --ci'",
+    "release:windows": "npm run tauri build -- --bundles nsis --ci",
     "preview": "vite preview",
     "tauri": "tauri"
   },

@@ -1,6 +1,6 @@
 [package]
 name = "green-hell-save-manager"
-version = "0.1.0"
+version = "1.0.0"
 description = "Green Hell local save manager"
 authors = ["Green Hell Save Manager"]
 edition = "2021"
