@@ -16,7 +16,7 @@ function timeAgo(timestamp: number) {
 }
 
 export function ProfilePage() {
-  const { selected: profile, refreshProfile, openEditProfile } = useProfiles();
+  const { selected: profile, selectedSteamAccount, refreshProfile, openEditProfile } = useProfiles();
   const [query, setQuery] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const saves = useMemo(
@@ -36,6 +36,7 @@ export function ProfilePage() {
         const bytes = Array.from(new Uint8Array(await file.arrayBuffer()));
         await invoke("upload_save_to_profile", {
           profileId: profile.id,
+          steamAccountId: selectedSteamAccount?.account_id,
           name: file.name,
           bytes,
         });
@@ -63,6 +64,7 @@ export function ProfilePage() {
   function copySave(save: SaveFile) {
     void invoke("copy_profile_save_to_steam", {
       profileId: profile.id,
+      steamAccountId: selectedSteamAccount?.account_id,
       name: save.name,
     })
       .then(() => toast.success("Save copied successfully"))

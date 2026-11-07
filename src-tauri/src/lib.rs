@@ -14,7 +14,7 @@ fn find_green_hell_saves() -> Vec<SaveLocation> { save_scanner::find() }
 fn find_profile_saves(app: tauri::AppHandle, profile_id: String) -> Result<SaveLocation, String> {
     let folder = profile_save_dir(&app, &profile_id)?;
     fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
-    Ok(save_scanner::scan_folder(&folder))
+    Ok(save_scanner::scan_folder(&folder, String::new()))
 }
 
 #[tauri::command]
@@ -52,9 +52,9 @@ fn safe_save_name(name: &str) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn upload_save_to_profile(app: tauri::AppHandle, profile_id: String, name: String, bytes: Vec<u8>) -> Result<String, String> {
+fn upload_save_to_profile(app: tauri::AppHandle, profile_id: String, steam_account_id: Option<String>, name: String, bytes: Vec<u8>) -> Result<String, String> {
     let name = safe_save_name(&name)?;
-    let destination_dir = if profile_id == "my" { steam_folder()? } else { profile_save_dir(&app, &profile_id)? };
+    let destination_dir = if profile_id == "my" { steam_folder(steam_account_id.as_deref())? } else { profile_save_dir(&app, &profile_id)? };
     fs::create_dir_all(&destination_dir).map_err(|error| error.to_string())?;
     let destination = destination_dir.join(name);
     fs::write(&destination, bytes).map_err(|error| error.to_string())?;
@@ -62,8 +62,8 @@ fn upload_save_to_profile(app: tauri::AppHandle, profile_id: String, name: Strin
 }
 
 #[tauri::command]
-fn upload_save_paths(app: tauri::AppHandle, profile_id: String, paths: Vec<String>) -> Result<Vec<String>, String> {
-    let destination_dir = if profile_id == "my" { steam_folder()? } else { profile_save_dir(&app, &profile_id)? };
+fn upload_save_paths(app: tauri::AppHandle, profile_id: String, steam_account_id: Option<String>, paths: Vec<String>) -> Result<Vec<String>, String> {
+    let destination_dir = if profile_id == "my" { steam_folder(steam_account_id.as_deref())? } else { profile_save_dir(&app, &profile_id)? };
     fs::create_dir_all(&destination_dir).map_err(|error| error.to_string())?;
     let mut uploaded = Vec::new();
     for path in paths {
@@ -77,9 +77,9 @@ fn upload_save_paths(app: tauri::AppHandle, profile_id: String, paths: Vec<Strin
 }
 
 #[tauri::command]
-fn copy_profile_save_to_steam(app: tauri::AppHandle, profile_id: String, name: String) -> Result<String, String> {
+fn copy_profile_save_to_steam(app: tauri::AppHandle, profile_id: String, steam_account_id: Option<String>, name: String) -> Result<String, String> {
     let source = profile_save_dir(&app, &profile_id)?.join(safe_save_name(&name)?);
-    let destination = steam_folder()?.join(source.file_name().unwrap());
+    let destination = steam_folder(steam_account_id.as_deref())?.join(source.file_name().unwrap());
     fs::copy(source, &destination).map_err(|error| error.to_string())?;
     Ok(destination.display().to_string())
 }

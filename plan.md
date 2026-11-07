@@ -152,5 +152,7 @@ Update this file during development. For each checkpoint, record:
 - Completed: Removed mocked saves/profiles, Steam detection now resolves App ID `815370` even when `remote` contains no saves, backup profiles reload from native storage, and detected folder paths open in the OS file explorer.
 - Completed: Profile metadata is persisted in SQLite through Tauri's official SQL plugin and migrations. Sonner provides top-center success/error feedback for profile, upload, copy, download, and folder actions.
 - Completed: Global `ProfilesContext` now owns profile selection, SQLite CRUD, dialogs, drag/drop, save refreshes, and initial hydration for every profile. Sidebar counts are populated from native folders before stored profiles are rendered, while `App.tsx` is layout-only.
+- Completed: Multi-account Steam detection exposes each userdata account ID. When multiple Green Hell accounts exist, an account chooser shows save counts and latest changes; all Steam uploads/copies are bound to the selected account, with account switching available from the header.
+- Completed: Steam roots are searched in platform defaults first and `STEAM_ROOT` is used only as an explicit fallback. Aliased Linux Steam paths are deduplicated by account ID, retaining the newest matching save location.
 - Open: Load detected saves directly from the Tauri backend, implement native export/restore, persist profiles, and add Steam lookup.
 - Next step: Run `npm run tauri dev` and verify detection against the local Steam/Proton installation.

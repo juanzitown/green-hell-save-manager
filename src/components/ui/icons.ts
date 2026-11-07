@@ -1,5 +1,6 @@
 import {
   Download,
+  ArrowLeft,
   ExternalLink,
   Gamepad2,
   HardDriveDownload,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export const icons = {
+  arrowLeft: ArrowLeft,
   download: Download,
   externalLink: ExternalLink,
   gamepad: Gamepad2,
