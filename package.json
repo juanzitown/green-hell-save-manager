@@ -7,7 +7,7 @@
     "frontend:dev": "vite",
     "build": "tsc && vite build",
     "release:linux": "distrobox enter debian -- bash -lc 'export PATH=\"/usr/bin:/bin:$HOME/.cargo/bin\"; npm run tauri build -- --bundles appimage,deb --ci'",
-    "release:windows": "npm run tauri build -- --bundles nsis --ci",
+    "release:windows": "./release-window.sh",
     "publish:linux": "bash ./.releases.sh linux",
     "publish:windows": "bash ./.releases.sh windows",
     "tauri": "tauri"
